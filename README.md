@@ -6,7 +6,7 @@ Talaria is a lightweight message broker that implements the Kafka protocol and p
 
 ## Contributing
 
-Contributions to this project are [released][released] to the public under the project's [opensource license](LICENSE.md).
+Contributions to this project are released to the public under the project's [opensource license](LICENSE.md).
 By contributing to this project you agree to the [Developer Certificate of Origin](https://developercertificate.org/) (DCO).
 The DCO was created by the Linux Kernel community and is a simple statement that you, as a contributor, wrote or otherwise have the legal right to contribute those changes.
 
