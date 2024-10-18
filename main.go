@@ -25,7 +25,7 @@ func initLogger() {
 	if os.Getenv("LOG_FORMAT") == "json" {
 		handler = slog.NewJSONHandler(os.Stdout, nil)
 	} else {
-		handler = new(logger.CustomHandler)
+		handler = logger.NewCustomeHandler(os.Stdout, nil)
 	}
 
 	logger := slog.New(logger.NewLevelHandler(logLevel, handler))
