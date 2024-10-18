@@ -38,7 +38,7 @@ func (a APIVersionsAPI) GetHeaderVersion(requestVersion int16) int16 {
 func getAPIVersions() []protocol.ApiVersion {
 	return []protocol.ApiVersion{
 		{ApiKey: (&protocol.ApiVersionsRequest{}).GetKey(), MinVersion: 0, MaxVersion: 3},
-		{ApiKey: (&protocol.MetadataRequest{}).GetKey(), MinVersion: 0, MaxVersion: 8},
+		{ApiKey: (&protocol.MetadataRequest{}).GetKey(), MinVersion: 0, MaxVersion: 12},
 		{ApiKey: (&protocol.ProduceRequest{}).GetKey(), MinVersion: 0, MaxVersion: 8},
 		// {APIKey: FetchKey, MinVersion: 0, MaxVersion: 3},
 		// {APIKey: OffsetsKey, MinVersion: 0, MaxVersion: 2},

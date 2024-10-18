@@ -41,7 +41,8 @@ func (pe *prepEncoder) putInt64(in int64) {
 }
 
 func (pe *prepEncoder) putUUID(in uuid.UUID) error {
-	return errors.New("not implemented")
+	pe.length += 16
+	return nil
 }
 
 func (pe *prepEncoder) putVarint(in int64) {

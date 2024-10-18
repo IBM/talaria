@@ -32,13 +32,14 @@ func (m MetadataAPI) GeneratePayload() ([]byte, error) {
 
 	slog.Debug("Metadata request", "req", req)
 
-	response := GenerateMetadataResponse()
+	response := GenerateMetadataResponse(m.GetRequest().Header.RequestApiVersion)
 	return protocol.Encode(response)
 }
 
-func GenerateMetadataResponse() *protocol.MetadataResponse {
+func GenerateMetadataResponse(version int16) *protocol.MetadataResponse {
 	response := protocol.MetadataResponse{}
 
+	response.Version = version
 	// TODO: handle throttle time
 	response.ThrottleTimeMs = 0
 	rack := ""
