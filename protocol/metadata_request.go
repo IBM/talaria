@@ -99,7 +99,7 @@ func (r *MetadataRequest) encode(pe packetEncoder) (err error) {
 		pe.putBool(r.AllowAutoTopicCreation)
 	}
 
-	if r.Version >= 8 && r.Version <= 1 {
+	if r.Version >= 8 && r.Version <= 10 {
 		pe.putBool(r.IncludeClusterAuthorizedOperations)
 	}
 
@@ -137,7 +137,7 @@ func (r *MetadataRequest) decode(pd packetDecoder, version int16) (err error) {
 		}
 	}
 
-	if r.Version >= 8 && r.Version <= 1 {
+	if r.Version >= 8 && r.Version <= 10 {
 		if r.IncludeClusterAuthorizedOperations, err = pd.getBool(); err != nil {
 			return err
 		}
