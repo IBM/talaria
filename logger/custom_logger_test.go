@@ -2,7 +2,6 @@ package logger
 
 import (
 	"bytes"
-	"fmt"
 	"reflect"
 	"talaria/utils"
 	"testing"
@@ -48,27 +47,9 @@ d: 6
 e: 7
 ---
 `
-	want := []map[string]any{
-		{
-			"a": 1,
-			"b": 2,
-			"c": 3,
-			"g": map[string]any{
-				"h": 4,
-				"i": "five",
-			},
-			"d": 6,
-		},
-		{
-			"e": 7,
-		},
-	}
+
+	want := []map[string]interface{}{{"a": 1, "b": 2, "c": 3, "d": 6, "g": map[interface{}]interface{}{"h": 4, "i": "five"}}, {"e": 7}}
 	got := parseLogEntries(t, []byte(in[1:]))
-
-	fmt.Printf("%#v\n", got)
-	fmt.Printf("%#v\n", want)
-	fmt.Println(reflect.DeepEqual(got, want))
-
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("\ngot:\n%v\nwant:\n%v", got, want)
 	}

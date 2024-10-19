@@ -56,7 +56,6 @@ func NewCustomeHandler(out io.Writer, opts *Options) *CustomHandler {
 
 // CustomHandler is a custom handler for logging records.
 func (ch *CustomHandler) Handle(ctx context.Context, r slog.Record) error {
-	fmt.Println("===>>> test111")
 	indentLevel := 0
 	bufp := allocBuf()
 	buf := *bufp
@@ -67,6 +66,20 @@ func (ch *CustomHandler) Handle(ctx context.Context, r slog.Record) error {
 	timestamp := time.Now().Format(time.RFC3339Nano)
 	lev, colCode := colorLogLevel(r.Level.String())
 
+	//TODO reivew
+	// if r.PC != 0 {
+	// 	fs := runtime.CallersFrames([]uintptr{r.PC})
+	// 	f, _ := fs.Next()
+	// 	// Optimize to minimize allocation.
+	// 	srcbufp := allocBuf()
+	// 	defer freeBuf(srcbufp)
+	// 	*srcbufp = append(*srcbufp, f.File...)
+	// 	*srcbufp = append(*srcbufp, ':')
+	// 	*srcbufp = strconv.AppendInt(*srcbufp, int64(f.Line), 10)
+	// 	buf = ch.appendAttr(buf, slog.String(slog.SourceKey, string(*srcbufp)), 0)
+	// }
+
+	//TODO move to separate func
 	buf = append(buf, "time="...)
 	buf = append(buf, painter(colCode, timestamp)...)
 	buf = append(buf, " level="...)
@@ -74,17 +87,15 @@ func (ch *CustomHandler) Handle(ctx context.Context, r slog.Record) error {
 	buf = append(buf, " msg="...)
 	buf = append(buf, painter(colCode, r.Message)...)
 
-	r.Attrs(func(a slog.Attr) bool {
-		buf = ch.appendAttr(buf, a, colCode, indentLevel)
-		return true
-	})
-
-	// logMessage := fmt.Sprintf("time=%s level=%s msg=%s", painter(green, timestamp), lev, painter(colCode, r.Message), painter(colCode, string(buf)))
-	// fmt.Println(logMessage)
-
+	if r.NumAttrs() > 0 {
+		buf = ch.appendUnopenedGroups(buf, ch.indentLevel)
+		r.Attrs(func(a slog.Attr) bool {
+			buf = ch.appendAttr(buf, a, colCode, indentLevel)
+			return true
+		})
+	}
 	// adding \n at the end for better formatting
 	buf = append(buf, "\n"...)
-	fmt.Println("===>>> test")
 	ch.mu.Lock()
 	defer ch.mu.Unlock()
 
