@@ -75,7 +75,7 @@ func (ch *CustomHandler) Handle(ctx context.Context, r slog.Record) error {
 	buf = append(buf, painter(colCode, r.Message)...)
 
 	r.Attrs(func(a slog.Attr) bool {
-		buf = ch.appendAttr(buf, a, indentLevel)
+		buf = ch.appendAttr(buf, a, colCode, indentLevel)
 		return true
 	})
 
@@ -135,12 +135,13 @@ func (ch *CustomHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	chCopy.unopenedGroups = nil
 	// Pre-format the attributes.
 	for _, a := range attrs {
-		chCopy.preformatted = chCopy.appendAttr(chCopy.preformatted, a, chCopy.indentLevel)
+		//TODO replace gray with required color val
+		chCopy.preformatted = chCopy.appendAttr(chCopy.preformatted, a, gray, chCopy.indentLevel)
 	}
 	return &chCopy
 }
 
-func (ch *CustomHandler) appendAttr(buf []byte, a slog.Attr, colCode int) []byte {
+func (ch *CustomHandler) appendAttr(buf []byte, a slog.Attr, colCode, indentLevel int) []byte {
 	// Resolve the Attr's value before doing anything else
 	a.Value = a.Value.Resolve()
 	// Ignore empty Attrs
@@ -148,7 +149,46 @@ func (ch *CustomHandler) appendAttr(buf []byte, a slog.Attr, colCode int) []byte
 		return buf
 	}
 
-	buf = fmt.Appendf(buf, " %s=%s", a.Key, painter(colCode, a.Value.String()))
+	// buf = fmt.Appendf(buf, " %s=%s", a.Key, painter(colCode, a.Value.String()))
+	// return buf
+
+	// Indent 4 spaces per level.
+	buf = fmt.Appendf(buf, "%*s", indentLevel*4, "")
+	switch a.Value.Kind() {
+	case slog.KindString:
+		// Quote string values, to make them easy to parse.
+		buf = append(buf, a.Key...)
+		buf = append(buf, ": "...)
+		buf = strconv.AppendQuote(buf, a.Value.String())
+		//buf = append(buf, '\n')
+	case slog.KindTime:
+		// Write times in a standard way, without the monotonic time.
+		buf = append(buf, a.Key...)
+		buf = append(buf, ": "...)
+		buf = a.Value.Time().AppendFormat(buf, time.RFC3339Nano)
+		//buf = append(buf, '\n')
+	case slog.KindGroup:
+		attrs := a.Value.Group()
+		// Ignore empty groups.
+		if len(attrs) == 0 {
+			return buf
+		}
+		// If the key is non-empty, write it out and indent the rest of the attrs.
+		// Otherwise, inline the attrs.
+		if a.Key != "" {
+			buf = fmt.Appendf(buf, "%s:\n", a.Key)
+			indentLevel++
+		}
+		for _, ga := range attrs {
+			buf = ch.appendAttr(buf, ga, colCode, indentLevel)
+		}
+
+	default:
+		buf = append(buf, a.Key...)
+		buf = append(buf, ": "...)
+		buf = append(buf, a.Value.String()...)
+		buf = append(buf, '\n')
+	}
 	return buf
 }
 
