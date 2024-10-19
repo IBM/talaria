@@ -2,70 +2,75 @@ package logger
 
 import (
 	"bytes"
-	"context"
-	"io"
-	"log/slog"
-	"os"
-	"strings"
-	"sync"
+	"fmt"
+	"reflect"
 	"talaria/utils"
 	"testing"
+	"testing/slogtest"
+
+	"gopkg.in/yaml.v2"
 )
 
-func TestCustomHandler_Handle(t *testing.T) {
-	type fields struct {
-		h slog.Handler
-		b *bytes.Buffer
-		m *sync.Mutex
+func TestSlogtest(t *testing.T) {
+	var buf bytes.Buffer
+	err := slogtest.TestHandler(NewCustomeHandler(&buf, nil), func() []map[string]any {
+		return parseLogEntries(t, buf.Bytes())
+	})
+	if err != nil {
+		t.Error(err)
 	}
-	type args struct {
-		c context.Context
-		r slog.Record
+}
+
+func parseLogEntries(t *testing.T, data []byte) []map[string]any {
+	entries := bytes.Split(data, []byte("---\n"))
+	entries = entries[:len(entries)-1] // last one is empty
+	var ms []map[string]any
+	for _, e := range entries {
+		var m map[string]any
+		if err := yaml.Unmarshal([]byte(e), &m); err != nil {
+			t.Fatal(err)
+		}
+		ms = append(ms, m)
 	}
-	tests := []struct {
-		name      string
-		fields    fields
-		args      args
-		wantTime  string
-		wantLevel string
-		wantMsg   string
-	}{
-		{name: "Happy flow retriving INFO", wantTime: "time=", wantLevel: "level=", wantMsg: "msg="},
+	return ms
+}
+
+func TestParseLogEntries(t *testing.T) {
+	in := `
+a: 1
+b: 2
+c: 3
+g:
+    h: 4
+    i: five
+d: 6
+---
+e: 7
+---
+`
+	want := []map[string]any{
+		{
+			"a": 1,
+			"b": 2,
+			"c": 3,
+			"g": map[string]any{
+				"h": 4,
+				"i": "five",
+			},
+			"d": 6,
+		},
+		{
+			"e": 7,
+		},
 	}
-	for _, tt := range tests {
+	got := parseLogEntries(t, []byte(in[1:]))
 
-		t.Run(tt.name, func(t *testing.T) {
-			h := &CustomHandler{
-				h: tt.fields.h,
-				b: tt.fields.b,
-				m: tt.fields.m,
-			}
+	fmt.Printf("%#v\n", got)
+	fmt.Printf("%#v\n", want)
+	fmt.Println(reflect.DeepEqual(got, want))
 
-			copyStdout := os.Stdout // keeping copy of the real stdout
-			r, w, _ := os.Pipe()
-			os.Stdout = w
-
-			h.Handle(tt.args.c, tt.args.r)
-			w.Close()
-			// test coverage errors if we don't restore stdout
-			os.Stdout = copyStdout // restoring copy stdout
-			got, _ := io.ReadAll(r)
-
-			gotString := string(got[:])
-
-			if !strings.Contains(gotString, tt.wantTime) {
-				t.Errorf("Custome logger should contain %s", tt.wantTime)
-			}
-
-			if !strings.Contains(gotString, tt.wantLevel) {
-				t.Errorf("Custome logger should contain %s", tt.wantLevel)
-			}
-
-			if !strings.Contains(gotString, tt.wantMsg) {
-				t.Errorf("Custome logger should contain %s", tt.wantMsg)
-			}
-
-		})
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("\ngot:\n%v\nwant:\n%v", got, want)
 	}
 }
 

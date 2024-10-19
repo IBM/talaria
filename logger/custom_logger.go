@@ -32,7 +32,6 @@ type CustomHandler struct {
 	preformatted   []byte   // data from WithGroup and WithAttrs
 	unopenedGroups []string // groups from WithGroup that haven't been opened
 	indentLevel    int
-	h              slog.Handler
 	mu             *sync.Mutex
 	out            io.Writer
 }
@@ -118,12 +117,10 @@ func colorLogLevel(level string) (string, int) {
 }
 
 func (ch *CustomHandler) Enabled(ctx context.Context, level slog.Level) bool {
-	//return ch.h.Enabled(ctx, level)
 	return level >= ch.opts.Level.Level()
 }
 
 func (ch *CustomHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	// return &CustomHandler{h: ch.h.WithAttrs(attrs), b: ch.b, mu: ch.mu}
 	if len(attrs) == 0 {
 		return ch
 	}
@@ -143,11 +140,15 @@ func (ch *CustomHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	return &chCopy
 }
 
-func (ch *CustomHandler) appendUnopenedGroups(buf []byte, indentLevel int) []byte {
-	for _, g := range ch.unopenedGroups {
-		buf = fmt.Appendf(buf, "%*s%s:\n", indentLevel*4, "", g)
-		indentLevel++
+func (ch *CustomHandler) appendAttr(buf []byte, a slog.Attr, colCode int) []byte {
+	// Resolve the Attr's value before doing anything else
+	a.Value = a.Value.Resolve()
+	// Ignore empty Attrs
+	if a.Equal(slog.Attr{}) {
+		return buf
 	}
+
+	buf = fmt.Appendf(buf, " %s=%s", a.Key, painter(colCode, a.Value.String()))
 	return buf
 }
 
@@ -163,15 +164,11 @@ func (ch *CustomHandler) WithGroup(name string) slog.Handler {
 	return &chCopy
 }
 
-func (ch *CustomHandler) appendAttr(buf []byte, a slog.Attr, colCode int) []byte {
-	// Resolve the Attr's value before doing anything else
-	a.Value = a.Value.Resolve()
-	// Ignore empty Attrs
-	if a.Equal(slog.Attr{}) {
-		return buf
+func (ch *CustomHandler) appendUnopenedGroups(buf []byte, indentLevel int) []byte {
+	for _, g := range ch.unopenedGroups {
+		buf = fmt.Appendf(buf, "%*s%s:\n", indentLevel*4, "", g)
+		indentLevel++
 	}
-
-	buf = fmt.Appendf(buf, " %s=%s", a.Key, painter(colCode, a.Value.String()))
 	return buf
 }
 
