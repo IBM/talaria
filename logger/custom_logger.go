@@ -1,10 +1,11 @@
 package logger
 
 import (
-	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
+	"slices"
 	"strconv"
 	"sync"
 	"time"
@@ -27,19 +28,82 @@ const (
 )
 
 type CustomHandler struct {
-	h slog.Handler
-	b *bytes.Buffer
-	m *sync.Mutex
+	opts           Options
+	preformatted   []byte   // data from WithGroup and WithAttrs
+	unopenedGroups []string // groups from WithGroup that haven't been opened
+	indentLevel    int
+	mu             *sync.Mutex
+	out            io.Writer
+}
+
+type Options struct {
+	// Level reports the minimum level to log.
+	// Levels with lower levels are discarded.
+	// If nil, the Handler uses [slog.LevelInfo].
+	Level slog.Leveler
+}
+
+func NewCustomeHandler(out io.Writer, opts *Options) *CustomHandler {
+	h := &CustomHandler{out: out, mu: &sync.Mutex{}}
+	if opts != nil {
+		h.opts = *opts
+	}
+	if h.opts.Level == nil {
+		h.opts.Level = slog.LevelInfo
+	}
+	return h
 }
 
 // CustomHandler is a custom handler for logging records.
-func (h *CustomHandler) Handle(c context.Context, r slog.Record) error {
+func (ch *CustomHandler) Handle(ctx context.Context, r slog.Record) error {
+	indentLevel := 0
+	bufp := allocBuf()
+	buf := *bufp
+	defer func() {
+		*bufp = buf
+		freeBuf(bufp)
+	}()
 	timestamp := time.Now().Format(time.RFC3339Nano)
 	lev, colCode := colorLogLevel(r.Level.String())
-	logMessage := fmt.Sprintf("time=%s level=%s msg=%s", painter(green, timestamp), lev, painter(colCode, r.Message))
 
-	fmt.Println(logMessage)
-	return nil
+	//TODO reivew
+	// if r.PC != 0 {
+	// 	fs := runtime.CallersFrames([]uintptr{r.PC})
+	// 	f, _ := fs.Next()
+	// 	// Optimize to minimize allocation.
+	// 	srcbufp := allocBuf()
+	// 	defer freeBuf(srcbufp)
+	// 	*srcbufp = append(*srcbufp, f.File...)
+	// 	*srcbufp = append(*srcbufp, ':')
+	// 	*srcbufp = strconv.AppendInt(*srcbufp, int64(f.Line), 10)
+	// 	buf = ch.appendAttr(buf, slog.String(slog.SourceKey, string(*srcbufp)), 0)
+	// }
+
+	//TODO move to separate func
+	buf = append(buf, "time="...)
+	buf = append(buf, painter(colCode, timestamp)...)
+	buf = append(buf, " level="...)
+	buf = append(buf, lev...)
+	buf = append(buf, " msg="...)
+	buf = append(buf, painter(colCode, r.Message)...)
+
+	if r.NumAttrs() > 0 {
+		buf = ch.appendUnopenedGroups(buf, ch.indentLevel)
+		r.Attrs(func(a slog.Attr) bool {
+			buf = ch.appendAttr(buf, a, colCode, indentLevel)
+			return true
+		})
+	}
+	// adding \n at the end for better formatting
+	buf = append(buf, "\n"...)
+	ch.mu.Lock()
+	defer ch.mu.Unlock()
+
+	_, err := ch.out.Write(buf)
+	if err != nil {
+		fmt.Println("write out error ", err)
+	}
+	return err
 }
 
 // Painter is a function that takes in a Bash color code and a string, and returns a string with the given string painted in the specified color.
@@ -64,13 +128,117 @@ func colorLogLevel(level string) (string, int) {
 }
 
 func (ch *CustomHandler) Enabled(ctx context.Context, level slog.Level) bool {
-	return ch.h.Enabled(ctx, level)
+	return level >= ch.opts.Level.Level()
 }
 
 func (ch *CustomHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return &CustomHandler{h: ch.h.WithAttrs(attrs), b: ch.b, m: ch.m}
+	if len(attrs) == 0 {
+		return ch
+	}
+	chCopy := *ch
+	// Force an append to copy the underlying array.
+	pre := slices.Clip(ch.preformatted)
+	// Add all groups from WithGroup that haven't already been added.
+	chCopy.preformatted = chCopy.appendUnopenedGroups(pre, chCopy.indentLevel)
+	// Each of those groups increased the indent level by 1.
+	chCopy.indentLevel += len(chCopy.unopenedGroups)
+	// Now all groups have been opened.
+	chCopy.unopenedGroups = nil
+	// Pre-format the attributes.
+	for _, a := range attrs {
+		//TODO replace gray with required color val
+		chCopy.preformatted = chCopy.appendAttr(chCopy.preformatted, a, gray, chCopy.indentLevel)
+	}
+	return &chCopy
+}
+
+func (ch *CustomHandler) appendAttr(buf []byte, a slog.Attr, colCode, indentLevel int) []byte {
+	// Resolve the Attr's value before doing anything else
+	a.Value = a.Value.Resolve()
+	// Ignore empty Attrs
+	if a.Equal(slog.Attr{}) {
+		return buf
+	}
+
+	// buf = fmt.Appendf(buf, " %s=%s", a.Key, painter(colCode, a.Value.String()))
+	// return buf
+
+	// Indent 4 spaces per level.
+	buf = fmt.Appendf(buf, "%*s", indentLevel*4, "")
+	switch a.Value.Kind() {
+	case slog.KindString:
+		// Quote string values, to make them easy to parse.
+		buf = append(buf, a.Key...)
+		buf = append(buf, ": "...)
+		buf = strconv.AppendQuote(buf, a.Value.String())
+		//buf = append(buf, '\n')
+	case slog.KindTime:
+		// Write times in a standard way, without the monotonic time.
+		buf = append(buf, a.Key...)
+		buf = append(buf, ": "...)
+		buf = a.Value.Time().AppendFormat(buf, time.RFC3339Nano)
+		//buf = append(buf, '\n')
+	case slog.KindGroup:
+		attrs := a.Value.Group()
+		// Ignore empty groups.
+		if len(attrs) == 0 {
+			return buf
+		}
+		// If the key is non-empty, write it out and indent the rest of the attrs.
+		// Otherwise, inline the attrs.
+		if a.Key != "" {
+			buf = fmt.Appendf(buf, "%s:\n", a.Key)
+			indentLevel++
+		}
+		for _, ga := range attrs {
+			buf = ch.appendAttr(buf, ga, colCode, indentLevel)
+		}
+
+	default:
+		buf = append(buf, a.Key...)
+		buf = append(buf, ": "...)
+		buf = append(buf, a.Value.String()...)
+		buf = append(buf, '\n')
+	}
+	return buf
 }
 
 func (ch *CustomHandler) WithGroup(name string) slog.Handler {
-	return &CustomHandler{h: ch.h.WithGroup(name), b: ch.b, m: ch.m}
+	if name == "" {
+		return ch
+	}
+	chCopy := *ch
+	// Add an unopened group to chCopy without modifying h.
+	chCopy.unopenedGroups = make([]string, len(ch.unopenedGroups)+1)
+	copy(chCopy.unopenedGroups, ch.unopenedGroups)
+	chCopy.unopenedGroups[len(chCopy.unopenedGroups)-1] = name
+	return &chCopy
+}
+
+func (ch *CustomHandler) appendUnopenedGroups(buf []byte, indentLevel int) []byte {
+	for _, g := range ch.unopenedGroups {
+		buf = fmt.Appendf(buf, "%*s%s:\n", indentLevel*4, "", g)
+		indentLevel++
+	}
+	return buf
+}
+
+func allocBuf() *[]byte {
+	return bufPool.Get().(*[]byte)
+}
+
+var bufPool = sync.Pool{
+	New: func() any {
+		b := make([]byte, 0, 1024)
+		return &b
+	},
+}
+
+func freeBuf(b *[]byte) {
+	// To reduce peak allocation, return only smaller buffers to the pool.
+	const maxBufferSize = 16 << 10
+	if cap(*b) <= maxBufferSize {
+		*b = (*b)[:0]
+		bufPool.Put(b)
+	}
 }

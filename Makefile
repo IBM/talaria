@@ -9,6 +9,9 @@ run_broker:
 run_test:
 	go run ./_examples/client/confluent/main.go
 
+race: 
+	go run -race .
+
 test:
 	go test -v ./...
 
