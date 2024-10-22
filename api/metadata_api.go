@@ -25,23 +25,24 @@ func (m MetadataAPI) GetHeaderVersion(requestVersion int16) int16 {
 
 func (m MetadataAPI) GeneratePayload() ([]byte, error) {
 	req := protocol.MetadataRequest{}
-	err := protocol.VersionedDecode(m.Request.Message, &req, m.GetRequest().Header.RequestApiVersion)
+	err := protocol.VersionedDecode(m.Request.Message, &req, m.Request.Header.RequestApiVersion)
 	if err != nil {
 		return nil, err
 	}
 
 	slog.Debug("Metadata request", "req", req)
 
-	response := GenerateMetadataResponse()
+	response := GenerateMetadataResponse(m.Request.Header.RequestApiVersion)
 	return protocol.Encode(response)
 }
 
-func GenerateMetadataResponse() *protocol.MetadataResponse {
+func GenerateMetadataResponse(version int16) *protocol.MetadataResponse {
 	response := protocol.MetadataResponse{}
 
+	response.Version = version
 	// TODO: handle throttle time
 	response.ThrottleTimeMs = 0
-	rack := ""
+	rack := "ffaabb"
 	response.Brokers = append(response.Brokers, protocol.MetadataResponseBroker{
 		NodeID: 1,
 		Host:   "localhost",
@@ -49,7 +50,7 @@ func GenerateMetadataResponse() *protocol.MetadataResponse {
 		Rack:   &rack,
 	})
 
-	clusterId := ""
+	clusterId := "aaabbbfff"
 	response.ClusterID = &clusterId
 	response.ControllerID = 1
 	topicName := "test-topic"

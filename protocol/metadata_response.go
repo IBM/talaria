@@ -337,7 +337,7 @@ func (r *MetadataResponse) encode(pe packetEncoder) (err error) {
 		}
 	}
 
-	if r.Version >= 8 && r.Version <= 1 {
+	if r.Version >= 8 && r.Version <= 10 {
 		pe.putInt32(r.ClusterAuthorizedOperations)
 	}
 
@@ -396,7 +396,7 @@ func (r *MetadataResponse) decode(pd packetDecoder, version int16) (err error) {
 		r.Topics[i] = block
 	}
 
-	if r.Version >= 8 && r.Version <= 1 {
+	if r.Version >= 8 && r.Version <= 10 {
 		if r.ClusterAuthorizedOperations, err = pd.getInt32(); err != nil {
 			return err
 		}

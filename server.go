@@ -79,24 +79,19 @@ func (client *Client) handleRequest() {
 		// encoded := hex.EncodeToString(messageBytes)
 		// fmt.Println(encoded)
 
+		// Parse the header twice, first time parse only API key and API version, from which we can
+		// infer the correct header version and then parse that again in the API code to get the full header.
 		header := &protocol.RequestHeader{}
-		protocol.VersionedDecode(messageBytes, header, 2)
+		protocol.VersionedDecode(messageBytes, header, 1)
 
 		slog.Debug(header.String())
-		slog.Debug(fmt.Sprintf("header length: %d", header.Len()))
-
-		request := api.Request{
-			Header:  *header,
-			Message: messageBytes[header.Len():],
-			Conn:    client.conn,
-		}
 
 		var apiHandler api.API
 		switch header.RequestApiKey {
 		case (&protocol.ApiVersionsRequest{}).GetKey():
-			apiHandler = api.APIVersionsAPI{Request: request}
+			apiHandler = api.APIVersionsAPI{Request: makeRequest(messageBytes, client.conn, (&protocol.ApiVersionsRequest{Version: header.RequestApiVersion}).GetHeaderVersion())}
 		case (&protocol.MetadataRequest{}).GetKey():
-			apiHandler = api.MetadataAPI{Request: request}
+			apiHandler = api.MetadataAPI{Request: makeRequest(messageBytes, client.conn, (&protocol.MetadataRequest{Version: header.RequestApiVersion}).GetHeaderVersion())}
 			// case protocol.ProduceKey:
 			// 	apiHandler = api.ProduceAPI{Request: request}
 		}
@@ -107,5 +102,17 @@ func (client *Client) handleRequest() {
 			break
 		}
 
+	}
+}
+
+func makeRequest(msg []byte, conn net.Conn, headerVersion int16) api.Request {
+	// parse the full header, based on API key and version
+	header := &protocol.RequestHeader{}
+	protocol.VersionedDecode(msg, header, headerVersion)
+
+	return api.Request{
+		Header:  *header,
+		Message: msg[header.Len():],
+		Conn:    conn,
 	}
 }
