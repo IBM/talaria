@@ -86,13 +86,15 @@ func (r *ControlledShutdownResponse) decode(pd packetDecoder, version int16) (er
 	if numRemainingPartitions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.RemainingPartitions = make([]RemainingPartition, numRemainingPartitions)
-	for i := 0; i < numRemainingPartitions; i++ {
-		var block RemainingPartition
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numRemainingPartitions > 0 {
+		r.RemainingPartitions = make([]RemainingPartition, numRemainingPartitions)
+		for i := 0; i < numRemainingPartitions; i++ {
+			var block RemainingPartition
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.RemainingPartitions[i] = block
 		}
-		r.RemainingPartitions[i] = block
 	}
 
 	if r.Version >= 3 {

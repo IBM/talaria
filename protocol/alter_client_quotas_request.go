@@ -137,26 +137,30 @@ func (e *EntryData_AlterClientQuotasRequest) decode(pd packetDecoder, version in
 	if numEntity, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	e.Entity = make([]EntityData_AlterClientQuotasRequest, numEntity)
-	for i := 0; i < numEntity; i++ {
-		var block EntityData_AlterClientQuotasRequest
-		if err := block.decode(pd, e.Version); err != nil {
-			return err
+	if numEntity > 0 {
+		e.Entity = make([]EntityData_AlterClientQuotasRequest, numEntity)
+		for i := 0; i < numEntity; i++ {
+			var block EntityData_AlterClientQuotasRequest
+			if err := block.decode(pd, e.Version); err != nil {
+				return err
+			}
+			e.Entity[i] = block
 		}
-		e.Entity[i] = block
 	}
 
 	var numOps int
 	if numOps, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	e.Ops = make([]OpData, numOps)
-	for i := 0; i < numOps; i++ {
-		var block OpData
-		if err := block.decode(pd, e.Version); err != nil {
-			return err
+	if numOps > 0 {
+		e.Ops = make([]OpData, numOps)
+		for i := 0; i < numOps; i++ {
+			var block OpData
+			if err := block.decode(pd, e.Version); err != nil {
+				return err
+			}
+			e.Ops[i] = block
 		}
-		e.Ops[i] = block
 	}
 
 	if e.Version >= 1 {
@@ -206,13 +210,15 @@ func (r *AlterClientQuotasRequest) decode(pd packetDecoder, version int16) (err 
 	if numEntries, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Entries = make([]EntryData_AlterClientQuotasRequest, numEntries)
-	for i := 0; i < numEntries; i++ {
-		var block EntryData_AlterClientQuotasRequest
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numEntries > 0 {
+		r.Entries = make([]EntryData_AlterClientQuotasRequest, numEntries)
+		for i := 0; i < numEntries; i++ {
+			var block EntryData_AlterClientQuotasRequest
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Entries[i] = block
 		}
-		r.Entries[i] = block
 	}
 
 	if r.ValidateOnly, err = pd.getBool(); err != nil {

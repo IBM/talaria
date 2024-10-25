@@ -126,13 +126,15 @@ func (p *PartitionResponse) decode(pd packetDecoder, version int16) (err error) 
 	if numActiveProducers, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	p.ActiveProducers = make([]ProducerState, numActiveProducers)
-	for i := 0; i < numActiveProducers; i++ {
-		var block ProducerState
-		if err := block.decode(pd, p.Version); err != nil {
-			return err
+	if numActiveProducers > 0 {
+		p.ActiveProducers = make([]ProducerState, numActiveProducers)
+		for i := 0; i < numActiveProducers; i++ {
+			var block ProducerState
+			if err := block.decode(pd, p.Version); err != nil {
+				return err
+			}
+			p.ActiveProducers[i] = block
 		}
-		p.ActiveProducers[i] = block
 	}
 
 	if _, err = pd.getEmptyTaggedFieldArray(); err != nil {
@@ -180,13 +182,15 @@ func (t *TopicResponse) decode(pd packetDecoder, version int16) (err error) {
 	if numPartitions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	t.Partitions = make([]PartitionResponse, numPartitions)
-	for i := 0; i < numPartitions; i++ {
-		var block PartitionResponse
-		if err := block.decode(pd, t.Version); err != nil {
-			return err
+	if numPartitions > 0 {
+		t.Partitions = make([]PartitionResponse, numPartitions)
+		for i := 0; i < numPartitions; i++ {
+			var block PartitionResponse
+			if err := block.decode(pd, t.Version); err != nil {
+				return err
+			}
+			t.Partitions[i] = block
 		}
-		t.Partitions[i] = block
 	}
 
 	if _, err = pd.getEmptyTaggedFieldArray(); err != nil {
@@ -232,13 +236,15 @@ func (r *DescribeProducersResponse) decode(pd packetDecoder, version int16) (err
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Topics = make([]TopicResponse, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block TopicResponse
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		r.Topics = make([]TopicResponse, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block TopicResponse
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Topics[i] = block
 		}
-		r.Topics[i] = block
 	}
 
 	if _, err = pd.getEmptyTaggedFieldArray(); err != nil {

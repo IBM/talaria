@@ -78,13 +78,15 @@ func (t *ReassignableTopic) decode(pd packetDecoder, version int16) (err error) 
 	if numPartitions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	t.Partitions = make([]ReassignablePartition, numPartitions)
-	for i := 0; i < numPartitions; i++ {
-		var block ReassignablePartition
-		if err := block.decode(pd, t.Version); err != nil {
-			return err
+	if numPartitions > 0 {
+		t.Partitions = make([]ReassignablePartition, numPartitions)
+		for i := 0; i < numPartitions; i++ {
+			var block ReassignablePartition
+			if err := block.decode(pd, t.Version); err != nil {
+				return err
+			}
+			t.Partitions[i] = block
 		}
-		t.Partitions[i] = block
 	}
 
 	if _, err = pd.getEmptyTaggedFieldArray(); err != nil {
@@ -130,13 +132,15 @@ func (r *AlterPartitionReassignmentsRequest) decode(pd packetDecoder, version in
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Topics = make([]ReassignableTopic, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block ReassignableTopic
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		r.Topics = make([]ReassignableTopic, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block ReassignableTopic
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Topics[i] = block
 		}
-		r.Topics[i] = block
 	}
 
 	if _, err = pd.getEmptyTaggedFieldArray(); err != nil {

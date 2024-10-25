@@ -152,13 +152,15 @@ func (r *JoinGroupRequest) decode(pd packetDecoder, version int16) (err error) {
 	if numProtocols, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Protocols = make([]JoinGroupRequestProtocol, numProtocols)
-	for i := 0; i < numProtocols; i++ {
-		var block JoinGroupRequestProtocol
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numProtocols > 0 {
+		r.Protocols = make([]JoinGroupRequestProtocol, numProtocols)
+		for i := 0; i < numProtocols; i++ {
+			var block JoinGroupRequestProtocol
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Protocols[i] = block
 		}
-		r.Protocols[i] = block
 	}
 
 	if r.Version >= 8 {

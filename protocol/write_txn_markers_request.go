@@ -104,13 +104,15 @@ func (m *WritableTxnMarker) decode(pd packetDecoder, version int16) (err error) 
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	m.Topics = make([]WritableTxnMarkerTopic, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block WritableTxnMarkerTopic
-		if err := block.decode(pd, m.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		m.Topics = make([]WritableTxnMarkerTopic, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block WritableTxnMarkerTopic
+			if err := block.decode(pd, m.Version); err != nil {
+				return err
+			}
+			m.Topics[i] = block
 		}
-		m.Topics[i] = block
 	}
 
 	if m.CoordinatorEpoch, err = pd.getInt32(); err != nil {
@@ -160,13 +162,15 @@ func (r *WriteTxnMarkersRequest) decode(pd packetDecoder, version int16) (err er
 	if numMarkers, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Markers = make([]WritableTxnMarker, numMarkers)
-	for i := 0; i < numMarkers; i++ {
-		var block WritableTxnMarker
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numMarkers > 0 {
+		r.Markers = make([]WritableTxnMarker, numMarkers)
+		for i := 0; i < numMarkers; i++ {
+			var block WritableTxnMarker
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Markers[i] = block
 		}
-		r.Markers[i] = block
 	}
 
 	if r.Version >= 1 {

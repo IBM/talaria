@@ -153,13 +153,15 @@ func (g *OffsetFetchRequestGroup) decode(pd packetDecoder, version int16) (err e
 		if numTopics, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		g.Topics = make([]OffsetFetchRequestTopics, numTopics)
-		for i := 0; i < numTopics; i++ {
-			var block OffsetFetchRequestTopics
-			if err := block.decode(pd, g.Version); err != nil {
-				return err
+		if numTopics > 0 {
+			g.Topics = make([]OffsetFetchRequestTopics, numTopics)
+			for i := 0; i < numTopics; i++ {
+				var block OffsetFetchRequestTopics
+				if err := block.decode(pd, g.Version); err != nil {
+					return err
+				}
+				g.Topics[i] = block
 			}
-			g.Topics[i] = block
 		}
 	}
 
@@ -242,13 +244,15 @@ func (r *OffsetFetchRequest) decode(pd packetDecoder, version int16) (err error)
 		if numTopics, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.Topics = make([]OffsetFetchRequestTopic, numTopics)
-		for i := 0; i < numTopics; i++ {
-			var block OffsetFetchRequestTopic
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numTopics > 0 {
+			r.Topics = make([]OffsetFetchRequestTopic, numTopics)
+			for i := 0; i < numTopics; i++ {
+				var block OffsetFetchRequestTopic
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.Topics[i] = block
 			}
-			r.Topics[i] = block
 		}
 	}
 
@@ -257,13 +261,15 @@ func (r *OffsetFetchRequest) decode(pd packetDecoder, version int16) (err error)
 		if numGroups, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.Groups = make([]OffsetFetchRequestGroup, numGroups)
-		for i := 0; i < numGroups; i++ {
-			var block OffsetFetchRequestGroup
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numGroups > 0 {
+			r.Groups = make([]OffsetFetchRequestGroup, numGroups)
+			for i := 0; i < numGroups; i++ {
+				var block OffsetFetchRequestGroup
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.Groups[i] = block
 			}
-			r.Groups[i] = block
 		}
 	}
 

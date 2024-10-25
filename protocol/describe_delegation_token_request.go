@@ -80,13 +80,15 @@ func (r *DescribeDelegationTokenRequest) decode(pd packetDecoder, version int16)
 	if numOwners, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Owners = make([]DescribeDelegationTokenOwner, numOwners)
-	for i := 0; i < numOwners; i++ {
-		var block DescribeDelegationTokenOwner
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numOwners > 0 {
+		r.Owners = make([]DescribeDelegationTokenOwner, numOwners)
+		for i := 0; i < numOwners; i++ {
+			var block DescribeDelegationTokenOwner
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Owners[i] = block
 		}
-		r.Owners[i] = block
 	}
 
 	if r.Version >= 2 {

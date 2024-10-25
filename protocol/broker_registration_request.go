@@ -185,26 +185,30 @@ func (r *BrokerRegistrationRequest) decode(pd packetDecoder, version int16) (err
 	if numListeners, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Listeners = make([]Listener, numListeners)
-	for i := 0; i < numListeners; i++ {
-		var block Listener
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numListeners > 0 {
+		r.Listeners = make([]Listener, numListeners)
+		for i := 0; i < numListeners; i++ {
+			var block Listener
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Listeners[i] = block
 		}
-		r.Listeners[i] = block
 	}
 
 	var numFeatures int
 	if numFeatures, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Features = make([]Feature, numFeatures)
-	for i := 0; i < numFeatures; i++ {
-		var block Feature
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numFeatures > 0 {
+		r.Features = make([]Feature, numFeatures)
+		for i := 0; i < numFeatures; i++ {
+			var block Feature
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Features[i] = block
 		}
-		r.Features[i] = block
 	}
 
 	if r.Rack, err = pd.getNullableString(); err != nil {

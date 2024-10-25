@@ -106,13 +106,15 @@ func (r *AlterConfigsResponse) decode(pd packetDecoder, version int16) (err erro
 	if numResponses, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Responses = make([]AlterConfigsResourceResponse_AlterConfigsResponse, numResponses)
-	for i := 0; i < numResponses; i++ {
-		var block AlterConfigsResourceResponse_AlterConfigsResponse
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numResponses > 0 {
+		r.Responses = make([]AlterConfigsResourceResponse_AlterConfigsResponse, numResponses)
+		for i := 0; i < numResponses; i++ {
+			var block AlterConfigsResourceResponse_AlterConfigsResponse
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Responses[i] = block
 		}
-		r.Responses[i] = block
 	}
 
 	if r.Version >= 2 {

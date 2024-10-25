@@ -116,13 +116,15 @@ func (r *ListGroupsResponse) decode(pd packetDecoder, version int16) (err error)
 	if numGroups, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Groups = make([]ListedGroup, numGroups)
-	for i := 0; i < numGroups; i++ {
-		var block ListedGroup
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numGroups > 0 {
+		r.Groups = make([]ListedGroup, numGroups)
+		for i := 0; i < numGroups; i++ {
+			var block ListedGroup
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Groups[i] = block
 		}
-		r.Groups[i] = block
 	}
 
 	if r.Version >= 3 {

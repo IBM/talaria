@@ -105,13 +105,15 @@ func (t *LeaderAndIsrTopicError) decode(pd packetDecoder, version int16) (err er
 		if numPartitionErrors, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		t.PartitionErrors = make([]LeaderAndIsrPartitionError_LeaderAndIsrResponse, numPartitionErrors)
-		for i := 0; i < numPartitionErrors; i++ {
-			var block LeaderAndIsrPartitionError_LeaderAndIsrResponse
-			if err := block.decode(pd, t.Version); err != nil {
-				return err
+		if numPartitionErrors > 0 {
+			t.PartitionErrors = make([]LeaderAndIsrPartitionError_LeaderAndIsrResponse, numPartitionErrors)
+			for i := 0; i < numPartitionErrors; i++ {
+				var block LeaderAndIsrPartitionError_LeaderAndIsrResponse
+				if err := block.decode(pd, t.Version); err != nil {
+					return err
+				}
+				t.PartitionErrors[i] = block
 			}
-			t.PartitionErrors[i] = block
 		}
 	}
 
@@ -182,13 +184,15 @@ func (r *LeaderAndIsrResponse) decode(pd packetDecoder, version int16) (err erro
 		if numPartitionErrors, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.PartitionErrors = make([]LeaderAndIsrPartitionError_LeaderAndIsrResponse, numPartitionErrors)
-		for i := 0; i < numPartitionErrors; i++ {
-			var block LeaderAndIsrPartitionError_LeaderAndIsrResponse
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numPartitionErrors > 0 {
+			r.PartitionErrors = make([]LeaderAndIsrPartitionError_LeaderAndIsrResponse, numPartitionErrors)
+			for i := 0; i < numPartitionErrors; i++ {
+				var block LeaderAndIsrPartitionError_LeaderAndIsrResponse
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.PartitionErrors[i] = block
 			}
-			r.PartitionErrors[i] = block
 		}
 	}
 
@@ -197,13 +201,15 @@ func (r *LeaderAndIsrResponse) decode(pd packetDecoder, version int16) (err erro
 		if numTopics, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.Topics = make([]LeaderAndIsrTopicError, numTopics)
-		for i := 0; i < numTopics; i++ {
-			var block LeaderAndIsrTopicError
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numTopics > 0 {
+			r.Topics = make([]LeaderAndIsrTopicError, numTopics)
+			for i := 0; i < numTopics; i++ {
+				var block LeaderAndIsrTopicError
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.Topics[i] = block
 			}
-			r.Topics[i] = block
 		}
 	}
 

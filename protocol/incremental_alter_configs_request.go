@@ -102,13 +102,15 @@ func (r *AlterConfigsResource_IncrementalAlterConfigsRequest) decode(pd packetDe
 	if numConfigs, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Configs = make([]AlterableConfig_IncrementalAlterConfigsRequest, numConfigs)
-	for i := 0; i < numConfigs; i++ {
-		var block AlterableConfig_IncrementalAlterConfigsRequest
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numConfigs > 0 {
+		r.Configs = make([]AlterableConfig_IncrementalAlterConfigsRequest, numConfigs)
+		for i := 0; i < numConfigs; i++ {
+			var block AlterableConfig_IncrementalAlterConfigsRequest
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Configs[i] = block
 		}
-		r.Configs[i] = block
 	}
 
 	if r.Version >= 1 {
@@ -158,13 +160,15 @@ func (r *IncrementalAlterConfigsRequest) decode(pd packetDecoder, version int16)
 	if numResources, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Resources = make([]AlterConfigsResource_IncrementalAlterConfigsRequest, numResources)
-	for i := 0; i < numResources; i++ {
-		var block AlterConfigsResource_IncrementalAlterConfigsRequest
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numResources > 0 {
+		r.Resources = make([]AlterConfigsResource_IncrementalAlterConfigsRequest, numResources)
+		for i := 0; i < numResources; i++ {
+			var block AlterConfigsResource_IncrementalAlterConfigsRequest
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Resources[i] = block
 		}
-		r.Resources[i] = block
 	}
 
 	if r.ValidateOnly, err = pd.getBool(); err != nil {

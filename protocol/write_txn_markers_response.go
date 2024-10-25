@@ -82,13 +82,15 @@ func (t *WritableTxnMarkerTopicResult) decode(pd packetDecoder, version int16) (
 	if numPartitions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	t.Partitions = make([]WritableTxnMarkerPartitionResult, numPartitions)
-	for i := 0; i < numPartitions; i++ {
-		var block WritableTxnMarkerPartitionResult
-		if err := block.decode(pd, t.Version); err != nil {
-			return err
+	if numPartitions > 0 {
+		t.Partitions = make([]WritableTxnMarkerPartitionResult, numPartitions)
+		for i := 0; i < numPartitions; i++ {
+			var block WritableTxnMarkerPartitionResult
+			if err := block.decode(pd, t.Version); err != nil {
+				return err
+			}
+			t.Partitions[i] = block
 		}
-		t.Partitions[i] = block
 	}
 
 	if t.Version >= 1 {
@@ -138,13 +140,15 @@ func (m *WritableTxnMarkerResult) decode(pd packetDecoder, version int16) (err e
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	m.Topics = make([]WritableTxnMarkerTopicResult, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block WritableTxnMarkerTopicResult
-		if err := block.decode(pd, m.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		m.Topics = make([]WritableTxnMarkerTopicResult, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block WritableTxnMarkerTopicResult
+			if err := block.decode(pd, m.Version); err != nil {
+				return err
+			}
+			m.Topics[i] = block
 		}
-		m.Topics[i] = block
 	}
 
 	if m.Version >= 1 {
@@ -190,13 +194,15 @@ func (r *WriteTxnMarkersResponse) decode(pd packetDecoder, version int16) (err e
 	if numMarkers, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Markers = make([]WritableTxnMarkerResult, numMarkers)
-	for i := 0; i < numMarkers; i++ {
-		var block WritableTxnMarkerResult
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numMarkers > 0 {
+		r.Markers = make([]WritableTxnMarkerResult, numMarkers)
+		for i := 0; i < numMarkers; i++ {
+			var block WritableTxnMarkerResult
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Markers[i] = block
 		}
-		r.Markers[i] = block
 	}
 
 	if r.Version >= 1 {

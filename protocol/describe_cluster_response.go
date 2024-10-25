@@ -136,13 +136,15 @@ func (r *DescribeClusterResponse) decode(pd packetDecoder, version int16) (err e
 	if numBrokers, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Brokers = make([]DescribeClusterBroker, numBrokers)
-	for i := 0; i < numBrokers; i++ {
-		var block DescribeClusterBroker
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numBrokers > 0 {
+		r.Brokers = make([]DescribeClusterBroker, numBrokers)
+		for i := 0; i < numBrokers; i++ {
+			var block DescribeClusterBroker
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Brokers[i] = block
 		}
-		r.Brokers[i] = block
 	}
 
 	if r.ClusterAuthorizedOperations, err = pd.getInt32(); err != nil {

@@ -88,13 +88,15 @@ func (r *CreateAclsResponse) decode(pd packetDecoder, version int16) (err error)
 	if numResults, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Results = make([]AclCreationResult, numResults)
-	for i := 0; i < numResults; i++ {
-		var block AclCreationResult
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numResults > 0 {
+		r.Results = make([]AclCreationResult, numResults)
+		for i := 0; i < numResults; i++ {
+			var block AclCreationResult
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Results[i] = block
 		}
-		r.Results[i] = block
 	}
 
 	if r.Version >= 2 {

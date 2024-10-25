@@ -186,13 +186,15 @@ func (t *FetchTopic) decode(pd packetDecoder, version int16) (err error) {
 	if numPartitions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	t.Partitions = make([]FetchPartition, numPartitions)
-	for i := 0; i < numPartitions; i++ {
-		var block FetchPartition
-		if err := block.decode(pd, t.Version); err != nil {
-			return err
+	if numPartitions > 0 {
+		t.Partitions = make([]FetchPartition, numPartitions)
+		for i := 0; i < numPartitions; i++ {
+			var block FetchPartition
+			if err := block.decode(pd, t.Version); err != nil {
+				return err
+			}
+			t.Partitions[i] = block
 		}
-		t.Partitions[i] = block
 	}
 
 	if t.Version >= 12 {
@@ -405,13 +407,15 @@ func (r *FetchRequest) decode(pd packetDecoder, version int16) (err error) {
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Topics = make([]FetchTopic, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block FetchTopic
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		r.Topics = make([]FetchTopic, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block FetchTopic
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Topics[i] = block
 		}
-		r.Topics[i] = block
 	}
 
 	if r.Version >= 7 {
@@ -419,13 +423,15 @@ func (r *FetchRequest) decode(pd packetDecoder, version int16) (err error) {
 		if numForgottenTopicsData, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.ForgottenTopicsData = make([]ForgottenTopic, numForgottenTopicsData)
-		for i := 0; i < numForgottenTopicsData; i++ {
-			var block ForgottenTopic
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numForgottenTopicsData > 0 {
+			r.ForgottenTopicsData = make([]ForgottenTopic, numForgottenTopicsData)
+			for i := 0; i < numForgottenTopicsData; i++ {
+				var block ForgottenTopic
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.ForgottenTopicsData[i] = block
 			}
-			r.ForgottenTopicsData[i] = block
 		}
 	}
 

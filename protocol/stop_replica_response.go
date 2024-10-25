@@ -94,13 +94,15 @@ func (r *StopReplicaResponse) decode(pd packetDecoder, version int16) (err error
 	if numPartitionErrors, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.PartitionErrors = make([]StopReplicaPartitionError, numPartitionErrors)
-	for i := 0; i < numPartitionErrors; i++ {
-		var block StopReplicaPartitionError
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numPartitionErrors > 0 {
+		r.PartitionErrors = make([]StopReplicaPartitionError, numPartitionErrors)
+		for i := 0; i < numPartitionErrors; i++ {
+			var block StopReplicaPartitionError
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.PartitionErrors[i] = block
 		}
-		r.PartitionErrors[i] = block
 	}
 
 	if r.Version >= 2 {

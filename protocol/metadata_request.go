@@ -56,6 +56,9 @@ func (t *MetadataRequestTopic) decode(pd packetDecoder, version int16) (err erro
 			return err
 		}
 	} else {
+		def := ""
+		t.Name = &def
+
 		if *t.Name, err = pd.getString(); err != nil {
 			return err
 		}

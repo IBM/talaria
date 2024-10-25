@@ -100,13 +100,15 @@ func (t *DescribeLogDirsTopic) decode(pd packetDecoder, version int16) (err erro
 	if numPartitions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	t.Partitions = make([]DescribeLogDirsPartition, numPartitions)
-	for i := 0; i < numPartitions; i++ {
-		var block DescribeLogDirsPartition
-		if err := block.decode(pd, t.Version); err != nil {
-			return err
+	if numPartitions > 0 {
+		t.Partitions = make([]DescribeLogDirsPartition, numPartitions)
+		for i := 0; i < numPartitions; i++ {
+			var block DescribeLogDirsPartition
+			if err := block.decode(pd, t.Version); err != nil {
+				return err
+			}
+			t.Partitions[i] = block
 		}
-		t.Partitions[i] = block
 	}
 
 	if t.Version >= 2 {
@@ -178,13 +180,15 @@ func (r *DescribeLogDirsResult) decode(pd packetDecoder, version int16) (err err
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Topics = make([]DescribeLogDirsTopic, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block DescribeLogDirsTopic
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		r.Topics = make([]DescribeLogDirsTopic, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block DescribeLogDirsTopic
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Topics[i] = block
 		}
-		r.Topics[i] = block
 	}
 
 	if r.Version >= 4 {
@@ -262,13 +266,15 @@ func (r *DescribeLogDirsResponse) decode(pd packetDecoder, version int16) (err e
 	if numResults, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Results = make([]DescribeLogDirsResult, numResults)
-	for i := 0; i < numResults; i++ {
-		var block DescribeLogDirsResult
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numResults > 0 {
+		r.Results = make([]DescribeLogDirsResult, numResults)
+		for i := 0; i < numResults; i++ {
+			var block DescribeLogDirsResult
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Results[i] = block
 		}
-		r.Results[i] = block
 	}
 
 	if r.Version >= 2 {

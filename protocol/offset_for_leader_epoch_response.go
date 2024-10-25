@@ -104,13 +104,15 @@ func (t *OffsetForLeaderTopicResult) decode(pd packetDecoder, version int16) (er
 	if numPartitions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	t.Partitions = make([]EpochEndOffset_OffsetForLeaderEpochResponse, numPartitions)
-	for i := 0; i < numPartitions; i++ {
-		var block EpochEndOffset_OffsetForLeaderEpochResponse
-		if err := block.decode(pd, t.Version); err != nil {
-			return err
+	if numPartitions > 0 {
+		t.Partitions = make([]EpochEndOffset_OffsetForLeaderEpochResponse, numPartitions)
+		for i := 0; i < numPartitions; i++ {
+			var block EpochEndOffset_OffsetForLeaderEpochResponse
+			if err := block.decode(pd, t.Version); err != nil {
+				return err
+			}
+			t.Partitions[i] = block
 		}
-		t.Partitions[i] = block
 	}
 
 	if t.Version >= 4 {
@@ -168,13 +170,15 @@ func (r *OffsetForLeaderEpochResponse) decode(pd packetDecoder, version int16) (
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Topics = make([]OffsetForLeaderTopicResult, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block OffsetForLeaderTopicResult
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		r.Topics = make([]OffsetForLeaderTopicResult, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block OffsetForLeaderTopicResult
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Topics[i] = block
 		}
-		r.Topics[i] = block
 	}
 
 	if r.Version >= 4 {

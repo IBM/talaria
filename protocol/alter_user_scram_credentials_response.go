@@ -88,13 +88,15 @@ func (r *AlterUserScramCredentialsResponse) decode(pd packetDecoder, version int
 	if numResults, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Results = make([]AlterUserScramCredentialsResult, numResults)
-	for i := 0; i < numResults; i++ {
-		var block AlterUserScramCredentialsResult
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numResults > 0 {
+		r.Results = make([]AlterUserScramCredentialsResult, numResults)
+		for i := 0; i < numResults; i++ {
+			var block AlterUserScramCredentialsResult
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Results[i] = block
 		}
-		r.Results[i] = block
 	}
 
 	if _, err = pd.getEmptyTaggedFieldArray(); err != nil {

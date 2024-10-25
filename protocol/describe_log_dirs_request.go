@@ -80,13 +80,15 @@ func (r *DescribeLogDirsRequest) decode(pd packetDecoder, version int16) (err er
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Topics = make([]DescribableLogDirTopic, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block DescribableLogDirTopic
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		r.Topics = make([]DescribableLogDirTopic, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block DescribableLogDirTopic
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Topics[i] = block
 		}
-		r.Topics[i] = block
 	}
 
 	if r.Version >= 2 {

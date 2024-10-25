@@ -160,13 +160,15 @@ func (f *DeleteAclsFilterResult) decode(pd packetDecoder, version int16) (err er
 	if numMatchingAcls, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	f.MatchingAcls = make([]DeleteAclsMatchingACL, numMatchingAcls)
-	for i := 0; i < numMatchingAcls; i++ {
-		var block DeleteAclsMatchingACL
-		if err := block.decode(pd, f.Version); err != nil {
-			return err
+	if numMatchingAcls > 0 {
+		f.MatchingAcls = make([]DeleteAclsMatchingACL, numMatchingAcls)
+		for i := 0; i < numMatchingAcls; i++ {
+			var block DeleteAclsMatchingACL
+			if err := block.decode(pd, f.Version); err != nil {
+				return err
+			}
+			f.MatchingAcls[i] = block
 		}
-		f.MatchingAcls[i] = block
 	}
 
 	if f.Version >= 2 {
@@ -220,13 +222,15 @@ func (r *DeleteAclsResponse) decode(pd packetDecoder, version int16) (err error)
 	if numFilterResults, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.FilterResults = make([]DeleteAclsFilterResult, numFilterResults)
-	for i := 0; i < numFilterResults; i++ {
-		var block DeleteAclsFilterResult
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numFilterResults > 0 {
+		r.FilterResults = make([]DeleteAclsFilterResult, numFilterResults)
+		for i := 0; i < numFilterResults; i++ {
+			var block DeleteAclsFilterResult
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.FilterResults[i] = block
 		}
-		r.FilterResults[i] = block
 	}
 
 	if r.Version >= 2 {

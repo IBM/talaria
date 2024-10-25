@@ -215,13 +215,15 @@ func (t *LeaderAndIsrTopicState) decode(pd packetDecoder, version int16) (err er
 		if numPartitionStates, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		t.PartitionStates = make([]LeaderAndIsrPartitionState_LeaderAndIsrRequest, numPartitionStates)
-		for i := 0; i < numPartitionStates; i++ {
-			var block LeaderAndIsrPartitionState_LeaderAndIsrRequest
-			if err := block.decode(pd, t.Version); err != nil {
-				return err
+		if numPartitionStates > 0 {
+			t.PartitionStates = make([]LeaderAndIsrPartitionState_LeaderAndIsrRequest, numPartitionStates)
+			for i := 0; i < numPartitionStates; i++ {
+				var block LeaderAndIsrPartitionState_LeaderAndIsrRequest
+				if err := block.decode(pd, t.Version); err != nil {
+					return err
+				}
+				t.PartitionStates[i] = block
 			}
-			t.PartitionStates[i] = block
 		}
 	}
 
@@ -397,13 +399,15 @@ func (r *LeaderAndIsrRequest) decode(pd packetDecoder, version int16) (err error
 		if numUngroupedPartitionStates, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.UngroupedPartitionStates = make([]LeaderAndIsrPartitionState_LeaderAndIsrRequest, numUngroupedPartitionStates)
-		for i := 0; i < numUngroupedPartitionStates; i++ {
-			var block LeaderAndIsrPartitionState_LeaderAndIsrRequest
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numUngroupedPartitionStates > 0 {
+			r.UngroupedPartitionStates = make([]LeaderAndIsrPartitionState_LeaderAndIsrRequest, numUngroupedPartitionStates)
+			for i := 0; i < numUngroupedPartitionStates; i++ {
+				var block LeaderAndIsrPartitionState_LeaderAndIsrRequest
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.UngroupedPartitionStates[i] = block
 			}
-			r.UngroupedPartitionStates[i] = block
 		}
 	}
 
@@ -412,13 +416,15 @@ func (r *LeaderAndIsrRequest) decode(pd packetDecoder, version int16) (err error
 		if numTopicStates, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.TopicStates = make([]LeaderAndIsrTopicState, numTopicStates)
-		for i := 0; i < numTopicStates; i++ {
-			var block LeaderAndIsrTopicState
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numTopicStates > 0 {
+			r.TopicStates = make([]LeaderAndIsrTopicState, numTopicStates)
+			for i := 0; i < numTopicStates; i++ {
+				var block LeaderAndIsrTopicState
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.TopicStates[i] = block
 			}
-			r.TopicStates[i] = block
 		}
 	}
 
@@ -426,13 +432,15 @@ func (r *LeaderAndIsrRequest) decode(pd packetDecoder, version int16) (err error
 	if numLiveLeaders, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.LiveLeaders = make([]LeaderAndIsrLiveLeader, numLiveLeaders)
-	for i := 0; i < numLiveLeaders; i++ {
-		var block LeaderAndIsrLiveLeader
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numLiveLeaders > 0 {
+		r.LiveLeaders = make([]LeaderAndIsrLiveLeader, numLiveLeaders)
+		for i := 0; i < numLiveLeaders; i++ {
+			var block LeaderAndIsrLiveLeader
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.LiveLeaders[i] = block
 		}
-		r.LiveLeaders[i] = block
 	}
 
 	if r.Version >= 4 {
