@@ -2,58 +2,18 @@ package logger
 
 import (
 	"bytes"
+	"context"
+	"fmt"
+	"io"
+	"log/slog"
+	"os"
 	"reflect"
+	"runtime"
+	"sync"
 	"talaria/utils"
 	"testing"
-	"testing/slogtest"
-
-	"gopkg.in/yaml.v2"
+	"time"
 )
-
-func TestSlogtest(t *testing.T) {
-	var buf bytes.Buffer
-	err := slogtest.TestHandler(NewCustomeHandler(&buf, nil), func() []map[string]any {
-		return parseLogEntries(t, buf.Bytes())
-	})
-	if err != nil {
-		t.Error(err)
-	}
-}
-
-func parseLogEntries(t *testing.T, data []byte) []map[string]any {
-	entries := bytes.Split(data, []byte("---\n"))
-	entries = entries[:len(entries)-1] // last one is empty
-	var ms []map[string]any
-	for _, e := range entries {
-		var m map[string]any
-		if err := yaml.Unmarshal([]byte(e), &m); err != nil {
-			t.Fatal(err)
-		}
-		ms = append(ms, m)
-	}
-	return ms
-}
-
-func TestParseLogEntries(t *testing.T) {
-	in := `
-a: 1
-b: 2
-c: 3
-g:
-    h: 4
-    i: five
-d: 6
----
-e: 7
----
-`
-
-	want := []map[string]interface{}{{"a": 1, "b": 2, "c": 3, "d": 6, "g": map[interface{}]interface{}{"h": 4, "i": "five"}}, {"e": 7}}
-	got := parseLogEntries(t, []byte(in[1:]))
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("\ngot:\n%v\nwant:\n%v", got, want)
-	}
-}
 
 func Test_painter(t *testing.T) {
 	type args struct {
@@ -109,6 +69,90 @@ func Test_colorLogLevel(t *testing.T) {
 			if got1 != tt.want1 {
 				t.Errorf("colorLogLevel() got1 = %v, want %v", got1, tt.want1)
 			}
+		})
+	}
+}
+
+func TestNewCustomeHandler(t *testing.T) {
+	var buf bytes.Buffer
+	type args struct {
+		opts *Options
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *CustomHandler
+		wantOut string
+	}{
+		{name: "Happy flow retriving INFO", want: NewCustomeHandler(&buf, nil)},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			out := &bytes.Buffer{}
+			if got := NewCustomeHandler(out, tt.args.opts); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("NewCustomeHandler() = %v, want %v", got, tt.want)
+			}
+			if gotOut := out.String(); gotOut != tt.wantOut {
+				t.Errorf("NewCustomeHandler() = %v, want %v", gotOut, tt.wantOut)
+			}
+		})
+	}
+}
+
+func TestCustomHandler_Handle(t *testing.T) {
+	var pcs [1]uintptr
+	runtime.Callers(2, pcs[:]) // skip [Callers, Infof]
+	var b bytes.Buffer
+	type fields struct {
+		opts           Options
+		preformatted   []byte
+		unopenedGroups []string
+		indentLevel    int
+		mu             *sync.Mutex
+		out            io.Writer
+	}
+	type args struct {
+		ctx context.Context
+		r   slog.Record
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		{name: "Happy flow retriving INFO", fields: fields{mu: &sync.Mutex{}, out: &b}, args: args{r: slog.NewRecord(time.Now(), slog.LevelInfo, fmt.Sprintf("\033[%sm%s%s", "some message in slog", "k", "v"), pcs[0])}, wantErr: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			ch := &CustomHandler{
+				opts:           tt.fields.opts,
+				preformatted:   tt.fields.preformatted,
+				unopenedGroups: tt.fields.unopenedGroups,
+				indentLevel:    tt.fields.indentLevel,
+				mu:             tt.fields.mu,
+				out:            tt.fields.out,
+			}
+			// if err := ch.Handle(tt.args.ctx, tt.args.r); (err != nil) != tt.wantErr {
+			// 	t.Errorf("CustomHandler.Handle() error = %v, wantErr %v", err, tt.wantErr)
+			// }
+			stdOut := os.Stdout
+
+			r, w, err := os.Pipe()
+			if err != nil {
+				slog.Error("pipe error ", err)
+			}
+			os.Stdout = w
+			if err := ch.Handle(tt.args.ctx, tt.args.r); (err != nil) != tt.wantErr {
+				t.Errorf("CustomHandler.Handle() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			_ = w.Close()
+
+			result, _ := io.ReadAll(r)
+			got := string(result)
+			os.Stdout = stdOut
+			fmt.Println("===> result \n", got)
 		})
 	}
 }

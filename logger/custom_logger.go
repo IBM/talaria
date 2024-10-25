@@ -94,11 +94,11 @@ func (ch *CustomHandler) Handle(ctx context.Context, r slog.Record) error {
 			return true
 		})
 	}
+
 	// adding \n at the end for better formatting
 	buf = append(buf, "\n"...)
 	ch.mu.Lock()
 	defer ch.mu.Unlock()
-
 	_, err := ch.out.Write(buf)
 	if err != nil {
 		fmt.Println("write out error ", err)
