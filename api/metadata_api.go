@@ -37,6 +37,9 @@ func (m MetadataAPI) GeneratePayload() ([]byte, error) {
 }
 
 func GenerateMetadataResponse(version int16) *protocol.MetadataResponse {
+	// For now the returned data is mock, just so we can continue developing the rest of the APIs.
+	// Once we have a more robust project architecture, this struct will be populated with the real
+	// cluster metadata.
 	response := protocol.MetadataResponse{}
 
 	response.Version = version
