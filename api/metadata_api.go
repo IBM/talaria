@@ -25,14 +25,14 @@ func (m MetadataAPI) GetHeaderVersion(requestVersion int16) int16 {
 
 func (m MetadataAPI) GeneratePayload() ([]byte, error) {
 	req := protocol.MetadataRequest{}
-	err := protocol.VersionedDecode(m.Request.Message, &req, m.Request.Header.RequestApiVersion)
+	_, err := protocol.VersionedDecode(m.GetRequest().Message, &req, m.GetRequest().Header.RequestApiVersion)
 	if err != nil {
 		return nil, err
 	}
 
 	slog.Debug("Metadata request", "req", req)
 
-	response := GenerateMetadataResponse(m.Request.Header.RequestApiVersion)
+	response := GenerateMetadataResponse(m.GetRequest().Header.RequestApiVersion)
 	return protocol.Encode(response)
 }
 

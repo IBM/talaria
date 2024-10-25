@@ -20,7 +20,7 @@ func (a APIVersionsAPI) GetRequest() Request {
 func (a APIVersionsAPI) GeneratePayload() ([]byte, error) {
 	// handle response
 	apiVersionRequest := protocol.ApiVersionsRequest{}
-	err := protocol.VersionedDecode(a.Request.Message, &apiVersionRequest, a.Request.Header.RequestApiVersion)
+	_, err := protocol.VersionedDecode(a.Request.Message, &apiVersionRequest, a.Request.Header.RequestApiVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (a APIVersionsAPI) GetHeaderVersion(requestVersion int16) int16 {
 func getAPIVersions() []protocol.ApiVersion {
 	return []protocol.ApiVersion{
 		{ApiKey: (&protocol.ApiVersionsRequest{}).GetKey(), MinVersion: 0, MaxVersion: 3},
-		{ApiKey: (&protocol.MetadataRequest{}).GetKey(), MinVersion: 0, MaxVersion: 8},
+		{ApiKey: (&protocol.MetadataRequest{}).GetKey(), MinVersion: 0, MaxVersion: 12},
 		{ApiKey: (&protocol.ProduceRequest{}).GetKey(), MinVersion: 0, MaxVersion: 8},
 		// {APIKey: FetchKey, MinVersion: 0, MaxVersion: 3},
 		// {APIKey: OffsetsKey, MinVersion: 0, MaxVersion: 2},

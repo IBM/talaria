@@ -54,6 +54,8 @@ func (server *Server) Run() {
 func (client *Client) handleRequest() {
 	defer client.conn.Close()
 
+Exit:
+	// read from socket until there are no more bytes left.
 	for {
 		// first 4 bytes contain the message size
 		sizeBytes := make([]byte, 4)
@@ -79,7 +81,7 @@ func (client *Client) handleRequest() {
 		// encoded := hex.EncodeToString(messageBytes)
 		// fmt.Println(encoded)
 
-		// Parse the header twice, first time parse only API key and API version, from which we can
+		// We parse the header twice, first time parse only API key and API version, from which we can
 		// infer the correct header version and then parse that again in the API code to get the full header.
 		header := &protocol.RequestHeader{}
 		protocol.VersionedDecode(messageBytes, header, 1)
@@ -89,11 +91,25 @@ func (client *Client) handleRequest() {
 		var apiHandler api.API
 		switch header.RequestApiKey {
 		case (&protocol.ApiVersionsRequest{}).GetKey():
-			apiHandler = api.APIVersionsAPI{Request: makeRequest(messageBytes, client.conn, (&protocol.ApiVersionsRequest{Version: header.RequestApiVersion}).GetHeaderVersion())}
+			req, err := makeRequest(messageBytes, client.conn, (&protocol.ApiVersionsRequest{Version: header.RequestApiVersion}).GetHeaderVersion())
+			if err != nil {
+				slog.Error("error creating request", "err", err)
+				// This break exits the outer for loop and closes the socket connection.
+				// If there is an error in the metadata exchange for example, we don't want to continue consuming the rest of the APIs.
+				break Exit
+			}
+			apiHandler = api.APIVersionsAPI{Request: req}
 		case (&protocol.MetadataRequest{}).GetKey():
-			apiHandler = api.MetadataAPI{Request: makeRequest(messageBytes, client.conn, (&protocol.MetadataRequest{Version: header.RequestApiVersion}).GetHeaderVersion())}
-			// case protocol.ProduceKey:
-			// 	apiHandler = api.ProduceAPI{Request: request}
+			req, err := makeRequest(messageBytes, client.conn, (&protocol.MetadataRequest{Version: header.RequestApiVersion}).GetHeaderVersion())
+			if err != nil {
+				slog.Error("error creating request", "err", err)
+				break Exit
+			}
+			apiHandler = api.MetadataAPI{Request: req}
+		// case protocol.ProduceKey:
+		// 	apiHandler = api.ProduceAPI{Request: request}
+		default:
+			slog.Error("Unknown API key", "key", header.RequestApiKey)
 		}
 
 		err = api.HandleResponse(apiHandler)
@@ -101,18 +117,20 @@ func (client *Client) handleRequest() {
 			slog.Error("error handling response", "err", err)
 			break
 		}
-
 	}
 }
 
-func makeRequest(msg []byte, conn net.Conn, headerVersion int16) api.Request {
+func makeRequest(msg []byte, conn net.Conn, headerVersion int16) (api.Request, error) {
 	// parse the full header, based on API key and version
 	header := &protocol.RequestHeader{}
-	protocol.VersionedDecode(msg, header, headerVersion)
+	headerSize, err := protocol.VersionedDecode(msg, header, headerVersion)
+	if err != nil {
+		return api.Request{}, err
+	}
 
 	return api.Request{
 		Header:  *header,
-		Message: msg[header.Len():],
+		Message: msg[headerSize:],
 		Conn:    conn,
-	}
+	}, nil
 }
