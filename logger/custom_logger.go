@@ -63,7 +63,6 @@ func (ch *CustomHandler) Handle(ctx context.Context, r slog.Record) error {
 		*bufp = buf
 		freeBuf(bufp)
 	}()
-	timestamp := time.Now().Format(time.RFC3339Nano)
 	lev, colCode := colorLogLevel(r.Level.String())
 
 	//TODO reivew
@@ -79,13 +78,7 @@ func (ch *CustomHandler) Handle(ctx context.Context, r slog.Record) error {
 	// 	buf = ch.appendAttr(buf, slog.String(slog.SourceKey, string(*srcbufp)), 0)
 	// }
 
-	//TODO move to separate func
-	buf = append(buf, "time="...)
-	buf = append(buf, painter(colCode, timestamp)...)
-	buf = append(buf, " level="...)
-	buf = append(buf, lev...)
-	buf = append(buf, " msg="...)
-	buf = append(buf, painter(colCode, r.Message)...)
+	buf = formatLoggerOutput(buf, lev, r.Message, colCode)
 
 	if r.NumAttrs() > 0 {
 		buf = ch.appendUnopenedGroups(buf, ch.indentLevel)
@@ -104,6 +97,17 @@ func (ch *CustomHandler) Handle(ctx context.Context, r slog.Record) error {
 		fmt.Println("write out error ", err)
 	}
 	return err
+}
+
+func formatLoggerOutput(buf []byte, lev, msg string, colCode int) []byte {
+	timestamp := time.Now().Format(time.RFC3339Nano)
+	buf = append(buf, "time="...)
+	buf = append(buf, painter(colCode, timestamp)...)
+	buf = append(buf, " level="...)
+	buf = append(buf, lev...)
+	buf = append(buf, " msg="...)
+	buf = append(buf, painter(colCode, msg)...)
+	return buf
 }
 
 // Painter is a function that takes in a Bash color code and a string, and returns a string with the given string painted in the specified color.
@@ -159,9 +163,6 @@ func (ch *CustomHandler) appendAttr(buf []byte, a slog.Attr, colCode, indentLeve
 	if a.Equal(slog.Attr{}) {
 		return buf
 	}
-
-	// buf = fmt.Appendf(buf, " %s=%s", a.Key, painter(colCode, a.Value.String()))
-	// return buf
 
 	// Indent 4 spaces per level.
 	buf = fmt.Appendf(buf, "%*s", indentLevel*4, "")

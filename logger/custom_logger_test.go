@@ -3,12 +3,11 @@ package logger
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"log/slog"
-	"os"
 	"reflect"
 	"runtime"
+	"strings"
 	"sync"
 	"talaria/utils"
 	"testing"
@@ -116,12 +115,14 @@ func TestCustomHandler_Handle(t *testing.T) {
 		r   slog.Record
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
+		name                               string
+		fields                             fields
+		args                               args
+		wantErr                            bool
+		want, wantTime, wantLevel, wantMsg string
 	}{
-		{name: "Happy flow retriving INFO", fields: fields{mu: &sync.Mutex{}, out: &b}, args: args{r: slog.NewRecord(time.Now(), slog.LevelInfo, fmt.Sprintf("\033[%sm%s%s", "some message in slog", "k", "v"), pcs[0])}, wantErr: false},
+		{name: "Happy flow retriving INFO", fields: fields{mu: &sync.Mutex{}, out: &b}, args: args{r: slog.NewRecord(time.Now(), slog.LevelInfo, "some message", pcs[0])}, wantErr: false, want: "some message", wantTime: "time=", wantLevel: "level=", wantMsg: "msg="},
+		// {name: "Happy flow retriving INFO with attributes", fields: fields{mu: &sync.Mutex{}, out: &b}, args: args{r: slog.NewRecord(time.Now(), slog.LevelInfo, fmt.Sprintf("\033[%sm%s%s", "some message in slog", "k", "v"), pcs[0])}, wantErr: true, want: "Paweł"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -134,25 +135,28 @@ func TestCustomHandler_Handle(t *testing.T) {
 				mu:             tt.fields.mu,
 				out:            tt.fields.out,
 			}
-			// if err := ch.Handle(tt.args.ctx, tt.args.r); (err != nil) != tt.wantErr {
-			// 	t.Errorf("CustomHandler.Handle() error = %v, wantErr %v", err, tt.wantErr)
-			// }
-			stdOut := os.Stdout
-
-			r, w, err := os.Pipe()
-			if err != nil {
-				slog.Error("pipe error ", err)
-			}
-			os.Stdout = w
 			if err := ch.Handle(tt.args.ctx, tt.args.r); (err != nil) != tt.wantErr {
 				t.Errorf("CustomHandler.Handle() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			_ = w.Close()
 
-			result, _ := io.ReadAll(r)
-			got := string(result)
-			os.Stdout = stdOut
-			fmt.Println("===> result \n", got)
+			got := b.String()
+
+			if !strings.Contains(got, tt.wantTime) {
+				t.Errorf("Custome logger should contain %s", tt.wantTime)
+			}
+
+			if !strings.Contains(got, tt.wantLevel) {
+				t.Errorf("Custome logger should contain %s", tt.wantLevel)
+			}
+
+			if !strings.Contains(got, tt.wantMsg) {
+				t.Errorf("Custome logger should contain %s", tt.wantMsg)
+			}
+
+			if !strings.Contains(got, tt.want) {
+				t.Errorf("Custome logger should contain %s", tt.want)
+			}
+
 		})
 	}
 }
