@@ -102,6 +102,10 @@ func TestCustomHandler_Handle(t *testing.T) {
 	var pcs [1]uintptr
 	runtime.Callers(2, pcs[:]) // skip [Callers, Infof]
 	var b bytes.Buffer
+
+	recWithAttr := slog.NewRecord(time.Now(), slog.LevelInfo, "some message", pcs[0])
+	recWithAttr.AddAttrs(slog.Attr{Key: "key1", Value: slog.AnyValue("value1")})
+
 	type fields struct {
 		opts           Options
 		preformatted   []byte
@@ -122,7 +126,7 @@ func TestCustomHandler_Handle(t *testing.T) {
 		want, wantTime, wantLevel, wantMsg string
 	}{
 		{name: "Happy flow retriving INFO", fields: fields{mu: &sync.Mutex{}, out: &b}, args: args{r: slog.NewRecord(time.Now(), slog.LevelInfo, "some message", pcs[0])}, wantErr: false, want: "some message", wantTime: "time=", wantLevel: "level=", wantMsg: "msg="},
-		// {name: "Happy flow retriving INFO with attributes", fields: fields{mu: &sync.Mutex{}, out: &b}, args: args{r: slog.NewRecord(time.Now(), slog.LevelInfo, fmt.Sprintf("\033[%sm%s%s", "some message in slog", "k", "v"), pcs[0])}, wantErr: true, want: "Paweł"},
+		{name: "Happy flow retriving INFO with attributes", fields: fields{mu: &sync.Mutex{}, out: &b}, args: args{r: recWithAttr}, wantErr: false, want: "value1", wantTime: "time=", wantLevel: "level=", wantMsg: "msg="},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
