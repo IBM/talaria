@@ -1,7 +1,6 @@
 package api
 
 import (
-	"log/slog"
 	"talaria/protocol"
 )
 
@@ -24,8 +23,6 @@ func (a APIVersionsAPI) GeneratePayload() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	slog.Debug("API Versions request", "req", apiVersionRequest)
 
 	response := NewAPIVersionsResponse(a.GetRequest().Header.RequestApiVersion)
 	return protocol.Encode(response)

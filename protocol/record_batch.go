@@ -148,12 +148,12 @@ func (r *RecordBatch) decode(pd packetDecoder, version int16) (err error) {
 		return err
 	}
 
-	remainingBytes, err := pd.getBytes()
+	remainingBytes, err := pd.getRawBytes(pd.remaining())
 	if err != nil {
 		return err
 	}
 
-	r.Records = remainingBytes[pd.remaining()-1:]
+	r.Records = remainingBytes
 
 	return err
 }
