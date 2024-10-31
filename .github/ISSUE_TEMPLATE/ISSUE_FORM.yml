@@ -4,7 +4,7 @@ title: "[Bug]: "
 labels: ["bug", "triage"]
 projects: ["opentalaria"]
 assignees:
-  - 
+  - vladoatanasov
 body:
   - type: markdown
     attributes:
@@ -24,7 +24,7 @@ body:
       label: What happened?
       description: Also tell us, what did you expect to happen?
       placeholder: Tell us what you see!
-      value: ""
+      value: "A Bug"
     validations:
       required: true
   - type: dropdown
