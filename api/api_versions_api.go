@@ -2,7 +2,7 @@ package api
 
 import (
 	"log/slog"
-	"talaria/protocol"
+	"opentalaria/protocol"
 )
 
 type APIVersionsAPI struct {
