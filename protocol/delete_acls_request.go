@@ -126,13 +126,15 @@ func (r *DeleteAclsRequest) decode(pd packetDecoder, version int16) (err error) 
 	if numFilters, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Filters = make([]DeleteAclsFilter, numFilters)
-	for i := 0; i < numFilters; i++ {
-		var block DeleteAclsFilter
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numFilters > 0 {
+		r.Filters = make([]DeleteAclsFilter, numFilters)
+		for i := 0; i < numFilters; i++ {
+			var block DeleteAclsFilter
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Filters[i] = block
 		}
-		r.Filters[i] = block
 	}
 
 	if r.Version >= 2 {

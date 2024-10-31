@@ -60,13 +60,15 @@ func (r *DescribeUserScramCredentialsRequest) decode(pd packetDecoder, version i
 	if numUsers, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Users = make([]UserName, numUsers)
-	for i := 0; i < numUsers; i++ {
-		var block UserName
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numUsers > 0 {
+		r.Users = make([]UserName, numUsers)
+		for i := 0; i < numUsers; i++ {
+			var block UserName
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Users[i] = block
 		}
-		r.Users[i] = block
 	}
 
 	if _, err = pd.getEmptyTaggedFieldArray(); err != nil {

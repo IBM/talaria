@@ -105,13 +105,15 @@ func (r *DeleteTopicsRequest) decode(pd packetDecoder, version int16) (err error
 		if numTopics, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.Topics = make([]DeleteTopicState, numTopics)
-		for i := 0; i < numTopics; i++ {
-			var block DeleteTopicState
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numTopics > 0 {
+			r.Topics = make([]DeleteTopicState, numTopics)
+			for i := 0; i < numTopics; i++ {
+				var block DeleteTopicState
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.Topics[i] = block
 			}
-			r.Topics[i] = block
 		}
 	}
 

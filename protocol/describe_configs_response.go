@@ -175,13 +175,15 @@ func (c *DescribeConfigsResourceResult) decode(pd packetDecoder, version int16) 
 		if numSynonyms, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		c.Synonyms = make([]DescribeConfigsSynonym, numSynonyms)
-		for i := 0; i < numSynonyms; i++ {
-			var block DescribeConfigsSynonym
-			if err := block.decode(pd, c.Version); err != nil {
-				return err
+		if numSynonyms > 0 {
+			c.Synonyms = make([]DescribeConfigsSynonym, numSynonyms)
+			for i := 0; i < numSynonyms; i++ {
+				var block DescribeConfigsSynonym
+				if err := block.decode(pd, c.Version); err != nil {
+					return err
+				}
+				c.Synonyms[i] = block
 			}
-			c.Synonyms[i] = block
 		}
 	}
 
@@ -272,13 +274,15 @@ func (r *DescribeConfigsResult) decode(pd packetDecoder, version int16) (err err
 	if numConfigs, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Configs = make([]DescribeConfigsResourceResult, numConfigs)
-	for i := 0; i < numConfigs; i++ {
-		var block DescribeConfigsResourceResult
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numConfigs > 0 {
+		r.Configs = make([]DescribeConfigsResourceResult, numConfigs)
+		for i := 0; i < numConfigs; i++ {
+			var block DescribeConfigsResourceResult
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Configs[i] = block
 		}
-		r.Configs[i] = block
 	}
 
 	if r.Version >= 4 {
@@ -332,13 +336,15 @@ func (r *DescribeConfigsResponse) decode(pd packetDecoder, version int16) (err e
 	if numResults, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Results = make([]DescribeConfigsResult, numResults)
-	for i := 0; i < numResults; i++ {
-		var block DescribeConfigsResult
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numResults > 0 {
+		r.Results = make([]DescribeConfigsResult, numResults)
+		for i := 0; i < numResults; i++ {
+			var block DescribeConfigsResult
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Results[i] = block
 		}
-		r.Results[i] = block
 	}
 
 	if r.Version >= 4 {

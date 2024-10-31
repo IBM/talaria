@@ -132,13 +132,15 @@ func (t *TransactionState_DescribeTransactionsResponse) decode(pd packetDecoder,
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	t.Topics = make([]TopicData_DescribeTransactionsResponse, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block TopicData_DescribeTransactionsResponse
-		if err := block.decode(pd, t.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		t.Topics = make([]TopicData_DescribeTransactionsResponse, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block TopicData_DescribeTransactionsResponse
+			if err := block.decode(pd, t.Version); err != nil {
+				return err
+			}
+			t.Topics[i] = block
 		}
-		t.Topics[i] = block
 	}
 
 	if _, err = pd.getEmptyTaggedFieldArray(); err != nil {
@@ -184,13 +186,15 @@ func (r *DescribeTransactionsResponse) decode(pd packetDecoder, version int16) (
 	if numTransactionStates, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.TransactionStates = make([]TransactionState_DescribeTransactionsResponse, numTransactionStates)
-	for i := 0; i < numTransactionStates; i++ {
-		var block TransactionState_DescribeTransactionsResponse
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTransactionStates > 0 {
+		r.TransactionStates = make([]TransactionState_DescribeTransactionsResponse, numTransactionStates)
+		for i := 0; i < numTransactionStates; i++ {
+			var block TransactionState_DescribeTransactionsResponse
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.TransactionStates[i] = block
 		}
-		r.TransactionStates[i] = block
 	}
 
 	if _, err = pd.getEmptyTaggedFieldArray(); err != nil {

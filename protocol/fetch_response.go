@@ -266,13 +266,15 @@ func (p *PartitionData_FetchResponse) decode(pd packetDecoder, version int16) (e
 		if numAbortedTransactions, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		p.AbortedTransactions = make([]AbortedTransaction, numAbortedTransactions)
-		for i := 0; i < numAbortedTransactions; i++ {
-			var block AbortedTransaction
-			if err := block.decode(pd, p.Version); err != nil {
-				return err
+		if numAbortedTransactions > 0 {
+			p.AbortedTransactions = make([]AbortedTransaction, numAbortedTransactions)
+			for i := 0; i < numAbortedTransactions; i++ {
+				var block AbortedTransaction
+				if err := block.decode(pd, p.Version); err != nil {
+					return err
+				}
+				p.AbortedTransactions[i] = block
 			}
-			p.AbortedTransactions[i] = block
 		}
 	}
 
@@ -355,13 +357,15 @@ func (r *FetchableTopicResponse) decode(pd packetDecoder, version int16) (err er
 	if numPartitions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Partitions = make([]PartitionData_FetchResponse, numPartitions)
-	for i := 0; i < numPartitions; i++ {
-		var block PartitionData_FetchResponse
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numPartitions > 0 {
+		r.Partitions = make([]PartitionData_FetchResponse, numPartitions)
+		for i := 0; i < numPartitions; i++ {
+			var block PartitionData_FetchResponse
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Partitions[i] = block
 		}
-		r.Partitions[i] = block
 	}
 
 	if r.Version >= 12 {
@@ -443,13 +447,15 @@ func (r *FetchResponse) decode(pd packetDecoder, version int16) (err error) {
 	if numResponses, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Responses = make([]FetchableTopicResponse, numResponses)
-	for i := 0; i < numResponses; i++ {
-		var block FetchableTopicResponse
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numResponses > 0 {
+		r.Responses = make([]FetchableTopicResponse, numResponses)
+		for i := 0; i < numResponses; i++ {
+			var block FetchableTopicResponse
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Responses[i] = block
 		}
-		r.Responses[i] = block
 	}
 
 	if r.Version >= 12 {

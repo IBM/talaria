@@ -92,13 +92,15 @@ func (r *DescribeClientQuotasRequest) decode(pd packetDecoder, version int16) (e
 	if numComponents, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Components = make([]ComponentData, numComponents)
-	for i := 0; i < numComponents; i++ {
-		var block ComponentData
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numComponents > 0 {
+		r.Components = make([]ComponentData, numComponents)
+		for i := 0; i < numComponents; i++ {
+			var block ComponentData
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Components[i] = block
 		}
-		r.Components[i] = block
 	}
 
 	if r.Strict, err = pd.getBool(); err != nil {

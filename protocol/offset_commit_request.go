@@ -116,13 +116,15 @@ func (t *OffsetCommitRequestTopic) decode(pd packetDecoder, version int16) (err 
 	if numPartitions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	t.Partitions = make([]OffsetCommitRequestPartition, numPartitions)
-	for i := 0; i < numPartitions; i++ {
-		var block OffsetCommitRequestPartition
-		if err := block.decode(pd, t.Version); err != nil {
-			return err
+	if numPartitions > 0 {
+		t.Partitions = make([]OffsetCommitRequestPartition, numPartitions)
+		for i := 0; i < numPartitions; i++ {
+			var block OffsetCommitRequestPartition
+			if err := block.decode(pd, t.Version); err != nil {
+				return err
+			}
+			t.Partitions[i] = block
 		}
-		t.Partitions[i] = block
 	}
 
 	if t.Version >= 8 {
@@ -230,13 +232,15 @@ func (r *OffsetCommitRequest) decode(pd packetDecoder, version int16) (err error
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Topics = make([]OffsetCommitRequestTopic, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block OffsetCommitRequestTopic
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		r.Topics = make([]OffsetCommitRequestTopic, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block OffsetCommitRequestTopic
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Topics[i] = block
 		}
-		r.Topics[i] = block
 	}
 
 	if r.Version >= 8 {

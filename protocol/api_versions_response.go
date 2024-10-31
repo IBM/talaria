@@ -216,13 +216,15 @@ func (r *ApiVersionsResponse) decode(pd packetDecoder, version int16) (err error
 	if numApiKeys, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.ApiKeys = make([]ApiVersion, numApiKeys)
-	for i := 0; i < numApiKeys; i++ {
-		var block ApiVersion
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numApiKeys > 0 {
+		r.ApiKeys = make([]ApiVersion, numApiKeys)
+		for i := 0; i < numApiKeys; i++ {
+			var block ApiVersion
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.ApiKeys[i] = block
 		}
-		r.ApiKeys[i] = block
 	}
 
 	if r.Version >= 1 {

@@ -145,26 +145,30 @@ func (r *AlterUserScramCredentialsRequest) decode(pd packetDecoder, version int1
 	if numDeletions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Deletions = make([]ScramCredentialDeletion, numDeletions)
-	for i := 0; i < numDeletions; i++ {
-		var block ScramCredentialDeletion
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numDeletions > 0 {
+		r.Deletions = make([]ScramCredentialDeletion, numDeletions)
+		for i := 0; i < numDeletions; i++ {
+			var block ScramCredentialDeletion
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Deletions[i] = block
 		}
-		r.Deletions[i] = block
 	}
 
 	var numUpsertions int
 	if numUpsertions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Upsertions = make([]ScramCredentialUpsertion, numUpsertions)
-	for i := 0; i < numUpsertions; i++ {
-		var block ScramCredentialUpsertion
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numUpsertions > 0 {
+		r.Upsertions = make([]ScramCredentialUpsertion, numUpsertions)
+		for i := 0; i < numUpsertions; i++ {
+			var block ScramCredentialUpsertion
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Upsertions[i] = block
 		}
-		r.Upsertions[i] = block
 	}
 
 	if _, err = pd.getEmptyTaggedFieldArray(); err != nil {

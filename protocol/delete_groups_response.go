@@ -88,13 +88,15 @@ func (r *DeleteGroupsResponse) decode(pd packetDecoder, version int16) (err erro
 	if numResults, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Results = make([]DeletableGroupResult, numResults)
-	for i := 0; i < numResults; i++ {
-		var block DeletableGroupResult
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numResults > 0 {
+		r.Results = make([]DeletableGroupResult, numResults)
+		for i := 0; i < numResults; i++ {
+			var block DeletableGroupResult
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Results[i] = block
 		}
-		r.Results[i] = block
 	}
 
 	if r.Version >= 2 {

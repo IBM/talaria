@@ -131,6 +131,7 @@ func (rd *realDecoder) getArrayLength() (int, error) {
 	} else if tmp > 2*math.MaxUint16 {
 		return -1, errInvalidArrayLength
 	}
+
 	return tmp, nil
 }
 

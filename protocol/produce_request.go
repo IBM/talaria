@@ -86,13 +86,15 @@ func (t *TopicProduceData) decode(pd packetDecoder, version int16) (err error) {
 	if numPartitionData, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	t.PartitionData = make([]PartitionProduceData, numPartitionData)
-	for i := 0; i < numPartitionData; i++ {
-		var block PartitionProduceData
-		if err := block.decode(pd, t.Version); err != nil {
-			return err
+	if numPartitionData > 0 {
+		t.PartitionData = make([]PartitionProduceData, numPartitionData)
+		for i := 0; i < numPartitionData; i++ {
+			var block PartitionProduceData
+			if err := block.decode(pd, t.Version); err != nil {
+				return err
+			}
+			t.PartitionData[i] = block
 		}
-		t.PartitionData[i] = block
 	}
 
 	if t.Version >= 9 {
@@ -168,13 +170,15 @@ func (r *ProduceRequest) decode(pd packetDecoder, version int16) (err error) {
 	if numTopicData, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.TopicData = make([]TopicProduceData, numTopicData)
-	for i := 0; i < numTopicData; i++ {
-		var block TopicProduceData
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTopicData > 0 {
+		r.TopicData = make([]TopicProduceData, numTopicData)
+		for i := 0; i < numTopicData; i++ {
+			var block TopicProduceData
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.TopicData[i] = block
 		}
-		r.TopicData[i] = block
 	}
 
 	if r.Version >= 9 {

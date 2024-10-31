@@ -170,13 +170,15 @@ func (t *DescribedDelegationToken) decode(pd packetDecoder, version int16) (err 
 	if numRenewers, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	t.Renewers = make([]DescribedDelegationTokenRenewer, numRenewers)
-	for i := 0; i < numRenewers; i++ {
-		var block DescribedDelegationTokenRenewer
-		if err := block.decode(pd, t.Version); err != nil {
-			return err
+	if numRenewers > 0 {
+		t.Renewers = make([]DescribedDelegationTokenRenewer, numRenewers)
+		for i := 0; i < numRenewers; i++ {
+			var block DescribedDelegationTokenRenewer
+			if err := block.decode(pd, t.Version); err != nil {
+				return err
+			}
+			t.Renewers[i] = block
 		}
-		t.Renewers[i] = block
 	}
 
 	if t.Version >= 2 {
@@ -234,13 +236,15 @@ func (r *DescribeDelegationTokenResponse) decode(pd packetDecoder, version int16
 	if numTokens, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Tokens = make([]DescribedDelegationToken, numTokens)
-	for i := 0; i < numTokens; i++ {
-		var block DescribedDelegationToken
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTokens > 0 {
+		r.Tokens = make([]DescribedDelegationToken, numTokens)
+		for i := 0; i < numTokens; i++ {
+			var block DescribedDelegationToken
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Tokens[i] = block
 		}
-		r.Tokens[i] = block
 	}
 
 	if r.ThrottleTimeMs, err = pd.getInt32(); err != nil {

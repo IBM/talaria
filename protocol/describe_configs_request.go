@@ -100,13 +100,15 @@ func (r *DescribeConfigsRequest) decode(pd packetDecoder, version int16) (err er
 	if numResources, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Resources = make([]DescribeConfigsResource, numResources)
-	for i := 0; i < numResources; i++ {
-		var block DescribeConfigsResource
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numResources > 0 {
+		r.Resources = make([]DescribeConfigsResource, numResources)
+		for i := 0; i < numResources; i++ {
+			var block DescribeConfigsResource
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Resources[i] = block
 		}
-		r.Resources[i] = block
 	}
 
 	if r.Version >= 1 {

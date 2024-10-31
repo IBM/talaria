@@ -104,26 +104,30 @@ func (a *Assignment) decode(pd packetDecoder, version int16) (err error) {
 	if numAssignedTopicPartitions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	a.AssignedTopicPartitions = make([]TopicPartitions_ConsumerGroupHeartbeatResponse, numAssignedTopicPartitions)
-	for i := 0; i < numAssignedTopicPartitions; i++ {
-		var block TopicPartitions_ConsumerGroupHeartbeatResponse
-		if err := block.decode(pd, a.Version); err != nil {
-			return err
+	if numAssignedTopicPartitions > 0 {
+		a.AssignedTopicPartitions = make([]TopicPartitions_ConsumerGroupHeartbeatResponse, numAssignedTopicPartitions)
+		for i := 0; i < numAssignedTopicPartitions; i++ {
+			var block TopicPartitions_ConsumerGroupHeartbeatResponse
+			if err := block.decode(pd, a.Version); err != nil {
+				return err
+			}
+			a.AssignedTopicPartitions[i] = block
 		}
-		a.AssignedTopicPartitions[i] = block
 	}
 
 	var numPendingTopicPartitions int
 	if numPendingTopicPartitions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	a.PendingTopicPartitions = make([]TopicPartitions_ConsumerGroupHeartbeatResponse, numPendingTopicPartitions)
-	for i := 0; i < numPendingTopicPartitions; i++ {
-		var block TopicPartitions_ConsumerGroupHeartbeatResponse
-		if err := block.decode(pd, a.Version); err != nil {
-			return err
+	if numPendingTopicPartitions > 0 {
+		a.PendingTopicPartitions = make([]TopicPartitions_ConsumerGroupHeartbeatResponse, numPendingTopicPartitions)
+		for i := 0; i < numPendingTopicPartitions; i++ {
+			var block TopicPartitions_ConsumerGroupHeartbeatResponse
+			if err := block.decode(pd, a.Version); err != nil {
+				return err
+			}
+			a.PendingTopicPartitions[i] = block
 		}
-		a.PendingTopicPartitions[i] = block
 	}
 
 	if a.MetadataVersion, err = pd.getInt16(); err != nil {

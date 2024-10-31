@@ -129,13 +129,15 @@ func (t *AddPartitionsToTxnTransaction) decode(pd packetDecoder, version int16) 
 		if numTopics, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		t.Topics = make([]AddPartitionsToTxnTopic_AddPartitionsToTxnRequest, numTopics)
-		for i := 0; i < numTopics; i++ {
-			var block AddPartitionsToTxnTopic_AddPartitionsToTxnRequest
-			if err := block.decode(pd, t.Version); err != nil {
-				return err
+		if numTopics > 0 {
+			t.Topics = make([]AddPartitionsToTxnTopic_AddPartitionsToTxnRequest, numTopics)
+			for i := 0; i < numTopics; i++ {
+				var block AddPartitionsToTxnTopic_AddPartitionsToTxnRequest
+				if err := block.decode(pd, t.Version); err != nil {
+					return err
+				}
+				t.Topics[i] = block
 			}
-			t.Topics[i] = block
 		}
 	}
 
@@ -218,13 +220,15 @@ func (r *AddPartitionsToTxnRequest) decode(pd packetDecoder, version int16) (err
 		if numTransactions, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.Transactions = make([]AddPartitionsToTxnTransaction, numTransactions)
-		for i := 0; i < numTransactions; i++ {
-			var block AddPartitionsToTxnTransaction
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numTransactions > 0 {
+			r.Transactions = make([]AddPartitionsToTxnTransaction, numTransactions)
+			for i := 0; i < numTransactions; i++ {
+				var block AddPartitionsToTxnTransaction
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.Transactions[i] = block
 			}
-			r.Transactions[i] = block
 		}
 	}
 
@@ -251,13 +255,15 @@ func (r *AddPartitionsToTxnRequest) decode(pd packetDecoder, version int16) (err
 		if numV3AndBelowTopics, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.V3AndBelowTopics = make([]AddPartitionsToTxnTopic_AddPartitionsToTxnRequest, numV3AndBelowTopics)
-		for i := 0; i < numV3AndBelowTopics; i++ {
-			var block AddPartitionsToTxnTopic_AddPartitionsToTxnRequest
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numV3AndBelowTopics > 0 {
+			r.V3AndBelowTopics = make([]AddPartitionsToTxnTopic_AddPartitionsToTxnRequest, numV3AndBelowTopics)
+			for i := 0; i < numV3AndBelowTopics; i++ {
+				var block AddPartitionsToTxnTopic_AddPartitionsToTxnRequest
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.V3AndBelowTopics[i] = block
 			}
-			r.V3AndBelowTopics[i] = block
 		}
 	}
 

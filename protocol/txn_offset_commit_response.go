@@ -84,13 +84,15 @@ func (t *TxnOffsetCommitResponseTopic) decode(pd packetDecoder, version int16) (
 	if numPartitions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	t.Partitions = make([]TxnOffsetCommitResponsePartition, numPartitions)
-	for i := 0; i < numPartitions; i++ {
-		var block TxnOffsetCommitResponsePartition
-		if err := block.decode(pd, t.Version); err != nil {
-			return err
+	if numPartitions > 0 {
+		t.Partitions = make([]TxnOffsetCommitResponsePartition, numPartitions)
+		for i := 0; i < numPartitions; i++ {
+			var block TxnOffsetCommitResponsePartition
+			if err := block.decode(pd, t.Version); err != nil {
+				return err
+			}
+			t.Partitions[i] = block
 		}
-		t.Partitions[i] = block
 	}
 
 	if t.Version >= 3 {
@@ -144,13 +146,15 @@ func (r *TxnOffsetCommitResponse) decode(pd packetDecoder, version int16) (err e
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Topics = make([]TxnOffsetCommitResponseTopic, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block TxnOffsetCommitResponseTopic
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		r.Topics = make([]TxnOffsetCommitResponseTopic, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block TxnOffsetCommitResponseTopic
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Topics[i] = block
 		}
-		r.Topics[i] = block
 	}
 
 	if r.Version >= 3 {

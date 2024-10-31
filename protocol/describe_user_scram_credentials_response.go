@@ -96,13 +96,15 @@ func (r *DescribeUserScramCredentialsResult) decode(pd packetDecoder, version in
 	if numCredentialInfos, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.CredentialInfos = make([]CredentialInfo, numCredentialInfos)
-	for i := 0; i < numCredentialInfos; i++ {
-		var block CredentialInfo
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numCredentialInfos > 0 {
+		r.CredentialInfos = make([]CredentialInfo, numCredentialInfos)
+		for i := 0; i < numCredentialInfos; i++ {
+			var block CredentialInfo
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.CredentialInfos[i] = block
 		}
-		r.CredentialInfos[i] = block
 	}
 
 	if _, err = pd.getEmptyTaggedFieldArray(); err != nil {
@@ -166,13 +168,15 @@ func (r *DescribeUserScramCredentialsResponse) decode(pd packetDecoder, version 
 	if numResults, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Results = make([]DescribeUserScramCredentialsResult, numResults)
-	for i := 0; i < numResults; i++ {
-		var block DescribeUserScramCredentialsResult
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numResults > 0 {
+		r.Results = make([]DescribeUserScramCredentialsResult, numResults)
+		for i := 0; i < numResults; i++ {
+			var block DescribeUserScramCredentialsResult
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Results[i] = block
 		}
-		r.Results[i] = block
 	}
 
 	if _, err = pd.getEmptyTaggedFieldArray(); err != nil {

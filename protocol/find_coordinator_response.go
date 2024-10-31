@@ -219,13 +219,15 @@ func (r *FindCoordinatorResponse) decode(pd packetDecoder, version int16) (err e
 		if numCoordinators, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.Coordinators = make([]Coordinator, numCoordinators)
-		for i := 0; i < numCoordinators; i++ {
-			var block Coordinator
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numCoordinators > 0 {
+			r.Coordinators = make([]Coordinator, numCoordinators)
+			for i := 0; i < numCoordinators; i++ {
+				var block Coordinator
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.Coordinators[i] = block
 			}
-			r.Coordinators[i] = block
 		}
 	}
 

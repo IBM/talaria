@@ -137,13 +137,15 @@ func (t *OffsetFetchResponseTopic) decode(pd packetDecoder, version int16) (err 
 		if numPartitions, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		t.Partitions = make([]OffsetFetchResponsePartition, numPartitions)
-		for i := 0; i < numPartitions; i++ {
-			var block OffsetFetchResponsePartition
-			if err := block.decode(pd, t.Version); err != nil {
-				return err
+		if numPartitions > 0 {
+			t.Partitions = make([]OffsetFetchResponsePartition, numPartitions)
+			for i := 0; i < numPartitions; i++ {
+				var block OffsetFetchResponsePartition
+				if err := block.decode(pd, t.Version); err != nil {
+					return err
+				}
+				t.Partitions[i] = block
 			}
-			t.Partitions[i] = block
 		}
 	}
 
@@ -289,13 +291,15 @@ func (t *OffsetFetchResponseTopics) decode(pd packetDecoder, version int16) (err
 		if numPartitions, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		t.Partitions = make([]OffsetFetchResponsePartitions, numPartitions)
-		for i := 0; i < numPartitions; i++ {
-			var block OffsetFetchResponsePartitions
-			if err := block.decode(pd, t.Version); err != nil {
-				return err
+		if numPartitions > 0 {
+			t.Partitions = make([]OffsetFetchResponsePartitions, numPartitions)
+			for i := 0; i < numPartitions; i++ {
+				var block OffsetFetchResponsePartitions
+				if err := block.decode(pd, t.Version); err != nil {
+					return err
+				}
+				t.Partitions[i] = block
 			}
-			t.Partitions[i] = block
 		}
 	}
 
@@ -361,13 +365,15 @@ func (g *OffsetFetchResponseGroup) decode(pd packetDecoder, version int16) (err 
 		if numTopics, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		g.Topics = make([]OffsetFetchResponseTopics, numTopics)
-		for i := 0; i < numTopics; i++ {
-			var block OffsetFetchResponseTopics
-			if err := block.decode(pd, g.Version); err != nil {
-				return err
+		if numTopics > 0 {
+			g.Topics = make([]OffsetFetchResponseTopics, numTopics)
+			for i := 0; i < numTopics; i++ {
+				var block OffsetFetchResponseTopics
+				if err := block.decode(pd, g.Version); err != nil {
+					return err
+				}
+				g.Topics[i] = block
 			}
-			g.Topics[i] = block
 		}
 	}
 
@@ -454,13 +460,15 @@ func (r *OffsetFetchResponse) decode(pd packetDecoder, version int16) (err error
 		if numTopics, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.Topics = make([]OffsetFetchResponseTopic, numTopics)
-		for i := 0; i < numTopics; i++ {
-			var block OffsetFetchResponseTopic
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numTopics > 0 {
+			r.Topics = make([]OffsetFetchResponseTopic, numTopics)
+			for i := 0; i < numTopics; i++ {
+				var block OffsetFetchResponseTopic
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.Topics[i] = block
 			}
-			r.Topics[i] = block
 		}
 	}
 
@@ -475,13 +483,15 @@ func (r *OffsetFetchResponse) decode(pd packetDecoder, version int16) (err error
 		if numGroups, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.Groups = make([]OffsetFetchResponseGroup, numGroups)
-		for i := 0; i < numGroups; i++ {
-			var block OffsetFetchResponseGroup
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numGroups > 0 {
+			r.Groups = make([]OffsetFetchResponseGroup, numGroups)
+			for i := 0; i < numGroups; i++ {
+				var block OffsetFetchResponseGroup
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.Groups[i] = block
 			}
-			r.Groups[i] = block
 		}
 	}
 

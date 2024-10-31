@@ -96,13 +96,15 @@ func (e *EntryData_AlterClientQuotasResponse) decode(pd packetDecoder, version i
 	if numEntity, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	e.Entity = make([]EntityData_AlterClientQuotasResponse, numEntity)
-	for i := 0; i < numEntity; i++ {
-		var block EntityData_AlterClientQuotasResponse
-		if err := block.decode(pd, e.Version); err != nil {
-			return err
+	if numEntity > 0 {
+		e.Entity = make([]EntityData_AlterClientQuotasResponse, numEntity)
+		for i := 0; i < numEntity; i++ {
+			var block EntityData_AlterClientQuotasResponse
+			if err := block.decode(pd, e.Version); err != nil {
+				return err
+			}
+			e.Entity[i] = block
 		}
-		e.Entity[i] = block
 	}
 
 	if e.Version >= 1 {
@@ -156,13 +158,15 @@ func (r *AlterClientQuotasResponse) decode(pd packetDecoder, version int16) (err
 	if numEntries, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Entries = make([]EntryData_AlterClientQuotasResponse, numEntries)
-	for i := 0; i < numEntries; i++ {
-		var block EntryData_AlterClientQuotasResponse
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numEntries > 0 {
+		r.Entries = make([]EntryData_AlterClientQuotasResponse, numEntries)
+		for i := 0; i < numEntries; i++ {
+			var block EntryData_AlterClientQuotasResponse
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Entries[i] = block
 		}
-		r.Entries[i] = block
 	}
 
 	if r.Version >= 1 {

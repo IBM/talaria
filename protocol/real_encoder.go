@@ -202,7 +202,12 @@ func (re *realEncoder) putEmptyTaggedFieldArray() {
 }
 
 func (re *realEncoder) putUUID(in uuid.UUID) error {
-	return errors.New("not implemented")
+	bytes, err := in.MarshalBinary()
+	if err != nil {
+		return err
+	}
+
+	return re.putRawBytes(bytes)
 }
 
 func (re *realEncoder) offset() int {
