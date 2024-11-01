@@ -56,6 +56,9 @@ func (t *MetadataRequestTopic) decode(pd packetDecoder, version int16) (err erro
 			return err
 		}
 	} else {
+		def := ""
+		t.Name = &def
+
 		if *t.Name, err = pd.getString(); err != nil {
 			return err
 		}
@@ -99,7 +102,7 @@ func (r *MetadataRequest) encode(pe packetEncoder) (err error) {
 		pe.putBool(r.AllowAutoTopicCreation)
 	}
 
-	if r.Version >= 8 && r.Version <= 1 {
+	if r.Version >= 8 && r.Version <= 10 {
 		pe.putBool(r.IncludeClusterAuthorizedOperations)
 	}
 
@@ -122,13 +125,15 @@ func (r *MetadataRequest) decode(pd packetDecoder, version int16) (err error) {
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Topics = make([]MetadataRequestTopic, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block MetadataRequestTopic
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		r.Topics = make([]MetadataRequestTopic, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block MetadataRequestTopic
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Topics[i] = block
 		}
-		r.Topics[i] = block
 	}
 
 	if r.Version >= 4 {
@@ -137,7 +142,7 @@ func (r *MetadataRequest) decode(pd packetDecoder, version int16) (err error) {
 		}
 	}
 
-	if r.Version >= 8 && r.Version <= 1 {
+	if r.Version >= 8 && r.Version <= 10 {
 		if r.IncludeClusterAuthorizedOperations, err = pd.getBool(); err != nil {
 			return err
 		}

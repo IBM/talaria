@@ -125,13 +125,15 @@ func (r *LeaveGroupResponse) decode(pd packetDecoder, version int16) (err error)
 		if numMembers, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.Members = make([]MemberResponse, numMembers)
-		for i := 0; i < numMembers; i++ {
-			var block MemberResponse
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numMembers > 0 {
+			r.Members = make([]MemberResponse, numMembers)
+			for i := 0; i < numMembers; i++ {
+				var block MemberResponse
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.Members[i] = block
 			}
-			r.Members[i] = block
 		}
 	}
 

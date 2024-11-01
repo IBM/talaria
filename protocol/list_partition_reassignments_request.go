@@ -78,13 +78,15 @@ func (r *ListPartitionReassignmentsRequest) decode(pd packetDecoder, version int
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Topics = make([]ListPartitionReassignmentsTopics, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block ListPartitionReassignmentsTopics
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		r.Topics = make([]ListPartitionReassignmentsTopics, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block ListPartitionReassignmentsTopics
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Topics[i] = block
 		}
-		r.Topics[i] = block
 	}
 
 	if _, err = pd.getEmptyTaggedFieldArray(); err != nil {

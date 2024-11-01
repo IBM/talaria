@@ -119,13 +119,15 @@ func (p *PartitionData_AlterPartitionRequest) decode(pd packetDecoder, version i
 		if numNewIsrWithEpochs, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		p.NewIsrWithEpochs = make([]BrokerState, numNewIsrWithEpochs)
-		for i := 0; i < numNewIsrWithEpochs; i++ {
-			var block BrokerState
-			if err := block.decode(pd, p.Version); err != nil {
-				return err
+		if numNewIsrWithEpochs > 0 {
+			p.NewIsrWithEpochs = make([]BrokerState, numNewIsrWithEpochs)
+			for i := 0; i < numNewIsrWithEpochs; i++ {
+				var block BrokerState
+				if err := block.decode(pd, p.Version); err != nil {
+					return err
+				}
+				p.NewIsrWithEpochs[i] = block
 			}
-			p.NewIsrWithEpochs[i] = block
 		}
 	}
 
@@ -202,13 +204,15 @@ func (t *TopicData_AlterPartitionRequest) decode(pd packetDecoder, version int16
 	if numPartitions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	t.Partitions = make([]PartitionData_AlterPartitionRequest, numPartitions)
-	for i := 0; i < numPartitions; i++ {
-		var block PartitionData_AlterPartitionRequest
-		if err := block.decode(pd, t.Version); err != nil {
-			return err
+	if numPartitions > 0 {
+		t.Partitions = make([]PartitionData_AlterPartitionRequest, numPartitions)
+		for i := 0; i < numPartitions; i++ {
+			var block PartitionData_AlterPartitionRequest
+			if err := block.decode(pd, t.Version); err != nil {
+				return err
+			}
+			t.Partitions[i] = block
 		}
-		t.Partitions[i] = block
 	}
 
 	if _, err = pd.getEmptyTaggedFieldArray(); err != nil {
@@ -262,13 +266,15 @@ func (r *AlterPartitionRequest) decode(pd packetDecoder, version int16) (err err
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Topics = make([]TopicData_AlterPartitionRequest, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block TopicData_AlterPartitionRequest
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		r.Topics = make([]TopicData_AlterPartitionRequest, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block TopicData_AlterPartitionRequest
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Topics[i] = block
 		}
-		r.Topics[i] = block
 	}
 
 	if _, err = pd.getEmptyTaggedFieldArray(); err != nil {

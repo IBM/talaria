@@ -241,26 +241,30 @@ func (r *ConsumerGroupHeartbeatRequest) decode(pd packetDecoder, version int16) 
 	if numClientAssignors, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.ClientAssignors = make([]Assignor, numClientAssignors)
-	for i := 0; i < numClientAssignors; i++ {
-		var block Assignor
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numClientAssignors > 0 {
+		r.ClientAssignors = make([]Assignor, numClientAssignors)
+		for i := 0; i < numClientAssignors; i++ {
+			var block Assignor
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.ClientAssignors[i] = block
 		}
-		r.ClientAssignors[i] = block
 	}
 
 	var numTopicPartitions int
 	if numTopicPartitions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.TopicPartitions = make([]TopicPartitions_ConsumerGroupHeartbeatRequest, numTopicPartitions)
-	for i := 0; i < numTopicPartitions; i++ {
-		var block TopicPartitions_ConsumerGroupHeartbeatRequest
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTopicPartitions > 0 {
+		r.TopicPartitions = make([]TopicPartitions_ConsumerGroupHeartbeatRequest, numTopicPartitions)
+		for i := 0; i < numTopicPartitions; i++ {
+			var block TopicPartitions_ConsumerGroupHeartbeatRequest
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.TopicPartitions[i] = block
 		}
-		r.TopicPartitions[i] = block
 	}
 
 	if _, err = pd.getEmptyTaggedFieldArray(); err != nil {

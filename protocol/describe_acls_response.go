@@ -124,13 +124,15 @@ func (r *DescribeAclsResource) decode(pd packetDecoder, version int16) (err erro
 	if numAcls, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Acls = make([]AclDescription, numAcls)
-	for i := 0; i < numAcls; i++ {
-		var block AclDescription
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numAcls > 0 {
+		r.Acls = make([]AclDescription, numAcls)
+		for i := 0; i < numAcls; i++ {
+			var block AclDescription
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Acls[i] = block
 		}
-		r.Acls[i] = block
 	}
 
 	if r.Version >= 2 {
@@ -202,13 +204,15 @@ func (r *DescribeAclsResponse) decode(pd packetDecoder, version int16) (err erro
 	if numResources, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Resources = make([]DescribeAclsResource, numResources)
-	for i := 0; i < numResources; i++ {
-		var block DescribeAclsResource
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numResources > 0 {
+		r.Resources = make([]DescribeAclsResource, numResources)
+		for i := 0; i < numResources; i++ {
+			var block DescribeAclsResource
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Resources[i] = block
 		}
-		r.Resources[i] = block
 	}
 
 	if r.Version >= 2 {

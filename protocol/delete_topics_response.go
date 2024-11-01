@@ -63,6 +63,9 @@ func (r *DeletableTopicResult) decode(pd packetDecoder, version int16) (err erro
 			return err
 		}
 	} else {
+		def := ""
+		r.Name = &def
+
 		if *r.Name, err = pd.getString(); err != nil {
 			return err
 		}
@@ -139,13 +142,15 @@ func (r *DeleteTopicsResponse) decode(pd packetDecoder, version int16) (err erro
 	if numResponses, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Responses = make([]DeletableTopicResult, numResponses)
-	for i := 0; i < numResponses; i++ {
-		var block DeletableTopicResult
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numResponses > 0 {
+		r.Responses = make([]DeletableTopicResult, numResponses)
+		for i := 0; i < numResponses; i++ {
+			var block DeletableTopicResult
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Responses[i] = block
 		}
-		r.Responses[i] = block
 	}
 
 	if r.Version >= 4 {

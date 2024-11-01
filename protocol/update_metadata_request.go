@@ -177,13 +177,15 @@ func (t *UpdateMetadataTopicState) decode(pd packetDecoder, version int16) (err 
 		if numPartitionStates, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		t.PartitionStates = make([]UpdateMetadataPartitionState_UpdateMetadataRequest, numPartitionStates)
-		for i := 0; i < numPartitionStates; i++ {
-			var block UpdateMetadataPartitionState_UpdateMetadataRequest
-			if err := block.decode(pd, t.Version); err != nil {
-				return err
+		if numPartitionStates > 0 {
+			t.PartitionStates = make([]UpdateMetadataPartitionState_UpdateMetadataRequest, numPartitionStates)
+			for i := 0; i < numPartitionStates; i++ {
+				var block UpdateMetadataPartitionState_UpdateMetadataRequest
+				if err := block.decode(pd, t.Version); err != nil {
+					return err
+				}
+				t.PartitionStates[i] = block
 			}
-			t.PartitionStates[i] = block
 		}
 	}
 
@@ -347,13 +349,15 @@ func (l *UpdateMetadataBroker) decode(pd packetDecoder, version int16) (err erro
 		if numEndpoints, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		l.Endpoints = make([]UpdateMetadataEndpoint, numEndpoints)
-		for i := 0; i < numEndpoints; i++ {
-			var block UpdateMetadataEndpoint
-			if err := block.decode(pd, l.Version); err != nil {
-				return err
+		if numEndpoints > 0 {
+			l.Endpoints = make([]UpdateMetadataEndpoint, numEndpoints)
+			for i := 0; i < numEndpoints; i++ {
+				var block UpdateMetadataEndpoint
+				if err := block.decode(pd, l.Version); err != nil {
+					return err
+				}
+				l.Endpoints[i] = block
 			}
-			l.Endpoints[i] = block
 		}
 	}
 
@@ -473,13 +477,15 @@ func (r *UpdateMetadataRequest) decode(pd packetDecoder, version int16) (err err
 		if numUngroupedPartitionStates, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.UngroupedPartitionStates = make([]UpdateMetadataPartitionState_UpdateMetadataRequest, numUngroupedPartitionStates)
-		for i := 0; i < numUngroupedPartitionStates; i++ {
-			var block UpdateMetadataPartitionState_UpdateMetadataRequest
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numUngroupedPartitionStates > 0 {
+			r.UngroupedPartitionStates = make([]UpdateMetadataPartitionState_UpdateMetadataRequest, numUngroupedPartitionStates)
+			for i := 0; i < numUngroupedPartitionStates; i++ {
+				var block UpdateMetadataPartitionState_UpdateMetadataRequest
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.UngroupedPartitionStates[i] = block
 			}
-			r.UngroupedPartitionStates[i] = block
 		}
 	}
 
@@ -488,13 +494,15 @@ func (r *UpdateMetadataRequest) decode(pd packetDecoder, version int16) (err err
 		if numTopicStates, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.TopicStates = make([]UpdateMetadataTopicState, numTopicStates)
-		for i := 0; i < numTopicStates; i++ {
-			var block UpdateMetadataTopicState
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numTopicStates > 0 {
+			r.TopicStates = make([]UpdateMetadataTopicState, numTopicStates)
+			for i := 0; i < numTopicStates; i++ {
+				var block UpdateMetadataTopicState
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.TopicStates[i] = block
 			}
-			r.TopicStates[i] = block
 		}
 	}
 
@@ -502,13 +510,15 @@ func (r *UpdateMetadataRequest) decode(pd packetDecoder, version int16) (err err
 	if numLiveBrokers, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.LiveBrokers = make([]UpdateMetadataBroker, numLiveBrokers)
-	for i := 0; i < numLiveBrokers; i++ {
-		var block UpdateMetadataBroker
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numLiveBrokers > 0 {
+		r.LiveBrokers = make([]UpdateMetadataBroker, numLiveBrokers)
+		for i := 0; i < numLiveBrokers; i++ {
+			var block UpdateMetadataBroker
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.LiveBrokers[i] = block
 		}
-		r.LiveBrokers[i] = block
 	}
 
 	if r.Version >= 6 {

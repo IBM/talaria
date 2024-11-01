@@ -106,13 +106,15 @@ func (r *UpdateFeaturesRequest) decode(pd packetDecoder, version int16) (err err
 	if numFeatureUpdates, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.FeatureUpdates = make([]FeatureUpdateKey, numFeatureUpdates)
-	for i := 0; i < numFeatureUpdates; i++ {
-		var block FeatureUpdateKey
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numFeatureUpdates > 0 {
+		r.FeatureUpdates = make([]FeatureUpdateKey, numFeatureUpdates)
+		for i := 0; i < numFeatureUpdates; i++ {
+			var block FeatureUpdateKey
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.FeatureUpdates[i] = block
 		}
-		r.FeatureUpdates[i] = block
 	}
 
 	if r.Version >= 1 {

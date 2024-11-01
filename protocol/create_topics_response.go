@@ -200,13 +200,15 @@ func (t *CreatableTopicResult) decode(pd packetDecoder, version int16) (err erro
 		if numConfigs, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		t.Configs = make([]CreatableTopicConfigs, numConfigs)
-		for i := 0; i < numConfigs; i++ {
-			var block CreatableTopicConfigs
-			if err := block.decode(pd, t.Version); err != nil {
-				return err
+		if numConfigs > 0 {
+			t.Configs = make([]CreatableTopicConfigs, numConfigs)
+			for i := 0; i < numConfigs; i++ {
+				var block CreatableTopicConfigs
+				if err := block.decode(pd, t.Version); err != nil {
+					return err
+				}
+				t.Configs[i] = block
 			}
-			t.Configs[i] = block
 		}
 	}
 
@@ -265,13 +267,15 @@ func (r *CreateTopicsResponse) decode(pd packetDecoder, version int16) (err erro
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Topics = make([]CreatableTopicResult, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block CreatableTopicResult
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		r.Topics = make([]CreatableTopicResult, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block CreatableTopicResult
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Topics[i] = block
 		}
-		r.Topics[i] = block
 	}
 
 	if r.Version >= 5 {

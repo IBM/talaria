@@ -86,13 +86,15 @@ func (d *AlterReplicaLogDir) decode(pd packetDecoder, version int16) (err error)
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	d.Topics = make([]AlterReplicaLogDirTopic, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block AlterReplicaLogDirTopic
-		if err := block.decode(pd, d.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		d.Topics = make([]AlterReplicaLogDirTopic, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block AlterReplicaLogDirTopic
+			if err := block.decode(pd, d.Version); err != nil {
+				return err
+			}
+			d.Topics[i] = block
 		}
-		d.Topics[i] = block
 	}
 
 	if d.Version >= 2 {
@@ -138,13 +140,15 @@ func (r *AlterReplicaLogDirsRequest) decode(pd packetDecoder, version int16) (er
 	if numDirs, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Dirs = make([]AlterReplicaLogDir, numDirs)
-	for i := 0; i < numDirs; i++ {
-		var block AlterReplicaLogDir
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numDirs > 0 {
+		r.Dirs = make([]AlterReplicaLogDir, numDirs)
+		for i := 0; i < numDirs; i++ {
+			var block AlterReplicaLogDir
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Dirs[i] = block
 		}
-		r.Dirs[i] = block
 	}
 
 	if r.Version >= 2 {

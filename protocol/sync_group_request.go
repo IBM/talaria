@@ -150,13 +150,15 @@ func (r *SyncGroupRequest) decode(pd packetDecoder, version int16) (err error) {
 	if numAssignments, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Assignments = make([]SyncGroupRequestAssignment, numAssignments)
-	for i := 0; i < numAssignments; i++ {
-		var block SyncGroupRequestAssignment
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numAssignments > 0 {
+		r.Assignments = make([]SyncGroupRequestAssignment, numAssignments)
+		for i := 0; i < numAssignments; i++ {
+			var block SyncGroupRequestAssignment
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Assignments[i] = block
 		}
-		r.Assignments[i] = block
 	}
 
 	if r.Version >= 4 {

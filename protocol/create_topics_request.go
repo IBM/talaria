@@ -155,26 +155,30 @@ func (t *CreatableTopic) decode(pd packetDecoder, version int16) (err error) {
 	if numAssignments, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	t.Assignments = make([]CreatableReplicaAssignment, numAssignments)
-	for i := 0; i < numAssignments; i++ {
-		var block CreatableReplicaAssignment
-		if err := block.decode(pd, t.Version); err != nil {
-			return err
+	if numAssignments > 0 {
+		t.Assignments = make([]CreatableReplicaAssignment, numAssignments)
+		for i := 0; i < numAssignments; i++ {
+			var block CreatableReplicaAssignment
+			if err := block.decode(pd, t.Version); err != nil {
+				return err
+			}
+			t.Assignments[i] = block
 		}
-		t.Assignments[i] = block
 	}
 
 	var numConfigs int
 	if numConfigs, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	t.Configs = make([]CreateableTopicConfig, numConfigs)
-	for i := 0; i < numConfigs; i++ {
-		var block CreateableTopicConfig
-		if err := block.decode(pd, t.Version); err != nil {
-			return err
+	if numConfigs > 0 {
+		t.Configs = make([]CreateableTopicConfig, numConfigs)
+		for i := 0; i < numConfigs; i++ {
+			var block CreateableTopicConfig
+			if err := block.decode(pd, t.Version); err != nil {
+				return err
+			}
+			t.Configs[i] = block
 		}
-		t.Configs[i] = block
 	}
 
 	if t.Version >= 5 {
@@ -230,13 +234,15 @@ func (r *CreateTopicsRequest) decode(pd packetDecoder, version int16) (err error
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Topics = make([]CreatableTopic, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block CreatableTopic
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		r.Topics = make([]CreatableTopic, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block CreatableTopic
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Topics[i] = block
 		}
-		r.Topics[i] = block
 	}
 
 	if r.timeoutMs, err = pd.getInt32(); err != nil {

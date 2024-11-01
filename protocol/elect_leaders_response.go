@@ -94,13 +94,15 @@ func (r *ReplicaElectionResult) decode(pd packetDecoder, version int16) (err err
 	if numPartitionResult, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.PartitionResult = make([]PartitionResult, numPartitionResult)
-	for i := 0; i < numPartitionResult; i++ {
-		var block PartitionResult
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numPartitionResult > 0 {
+		r.PartitionResult = make([]PartitionResult, numPartitionResult)
+		for i := 0; i < numPartitionResult; i++ {
+			var block PartitionResult
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.PartitionResult[i] = block
 		}
-		r.PartitionResult[i] = block
 	}
 
 	if r.Version >= 2 {
@@ -166,13 +168,15 @@ func (r *ElectLeadersResponse) decode(pd packetDecoder, version int16) (err erro
 	if numReplicaElectionResults, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.ReplicaElectionResults = make([]ReplicaElectionResult, numReplicaElectionResults)
-	for i := 0; i < numReplicaElectionResults; i++ {
-		var block ReplicaElectionResult
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numReplicaElectionResults > 0 {
+		r.ReplicaElectionResults = make([]ReplicaElectionResult, numReplicaElectionResults)
+		for i := 0; i < numReplicaElectionResults; i++ {
+			var block ReplicaElectionResult
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.ReplicaElectionResults[i] = block
 		}
-		r.ReplicaElectionResults[i] = block
 	}
 
 	if r.Version >= 2 {

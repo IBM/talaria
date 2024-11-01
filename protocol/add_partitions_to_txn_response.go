@@ -44,13 +44,15 @@ func (a *AddPartitionsToTxnTopicResult_AddPartitionsToTxnResponse) decode(pd pac
 	if numResultsByPartition, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	a.ResultsByPartition = make([]AddPartitionsToTxnPartitionResult, numResultsByPartition)
-	for i := 0; i < numResultsByPartition; i++ {
-		var block AddPartitionsToTxnPartitionResult
-		if err := block.decode(pd, a.Version); err != nil {
-			return err
+	if numResultsByPartition > 0 {
+		a.ResultsByPartition = make([]AddPartitionsToTxnPartitionResult, numResultsByPartition)
+		for i := 0; i < numResultsByPartition; i++ {
+			var block AddPartitionsToTxnPartitionResult
+			if err := block.decode(pd, a.Version); err != nil {
+				return err
+			}
+			a.ResultsByPartition[i] = block
 		}
-		a.ResultsByPartition[i] = block
 	}
 
 	if a.Version >= 3 {
@@ -149,13 +151,15 @@ func (r *AddPartitionsToTxnResult) decode(pd packetDecoder, version int16) (err 
 		if numTopicResults, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.TopicResults = make([]AddPartitionsToTxnTopicResult_AddPartitionsToTxnResponse, numTopicResults)
-		for i := 0; i < numTopicResults; i++ {
-			var block AddPartitionsToTxnTopicResult_AddPartitionsToTxnResponse
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numTopicResults > 0 {
+			r.TopicResults = make([]AddPartitionsToTxnTopicResult_AddPartitionsToTxnResponse, numTopicResults)
+			for i := 0; i < numTopicResults; i++ {
+				var block AddPartitionsToTxnTopicResult_AddPartitionsToTxnResponse
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.TopicResults[i] = block
 			}
-			r.TopicResults[i] = block
 		}
 	}
 
@@ -238,13 +242,15 @@ func (r *AddPartitionsToTxnResponse) decode(pd packetDecoder, version int16) (er
 		if numResultsByTransaction, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.ResultsByTransaction = make([]AddPartitionsToTxnResult, numResultsByTransaction)
-		for i := 0; i < numResultsByTransaction; i++ {
-			var block AddPartitionsToTxnResult
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numResultsByTransaction > 0 {
+			r.ResultsByTransaction = make([]AddPartitionsToTxnResult, numResultsByTransaction)
+			for i := 0; i < numResultsByTransaction; i++ {
+				var block AddPartitionsToTxnResult
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.ResultsByTransaction[i] = block
 			}
-			r.ResultsByTransaction[i] = block
 		}
 	}
 
@@ -253,13 +259,15 @@ func (r *AddPartitionsToTxnResponse) decode(pd packetDecoder, version int16) (er
 		if numResultsByTopicV3AndBelow, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.ResultsByTopicV3AndBelow = make([]AddPartitionsToTxnTopicResult_AddPartitionsToTxnResponse, numResultsByTopicV3AndBelow)
-		for i := 0; i < numResultsByTopicV3AndBelow; i++ {
-			var block AddPartitionsToTxnTopicResult_AddPartitionsToTxnResponse
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numResultsByTopicV3AndBelow > 0 {
+			r.ResultsByTopicV3AndBelow = make([]AddPartitionsToTxnTopicResult_AddPartitionsToTxnResponse, numResultsByTopicV3AndBelow)
+			for i := 0; i < numResultsByTopicV3AndBelow; i++ {
+				var block AddPartitionsToTxnTopicResult_AddPartitionsToTxnResponse
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.ResultsByTopicV3AndBelow[i] = block
 			}
-			r.ResultsByTopicV3AndBelow[i] = block
 		}
 	}
 

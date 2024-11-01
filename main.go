@@ -3,9 +3,9 @@ package main
 import (
 	"log/slog"
 	"net/http"
+	"opentalaria/logger"
+	"opentalaria/utils"
 	"os"
-	"talaria/logger"
-	"talaria/utils"
 
 	// We start a web server only in localdev mode, which should't expose any sensitive information.
 	// If we add some web APIs one day, this functionality has to be reviewed.

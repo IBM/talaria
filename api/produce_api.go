@@ -1,37 +1,61 @@
 package api
 
-// import (
-// 	"lightweight-broker/protocol"
-// 	"lightweight-broker/protocol/models"
-// 	"log/slog"
-// )
+import (
+	"log/slog"
+	"opentalaria/protocol"
+	"opentalaria/utils"
+)
 
-// type ProduceAPI struct {
-// 	Request Request
-// }
+type ProduceAPI struct {
+	Request Request
+}
 
-// func (p ProduceAPI) Name() string {
-// 	return "Produce"
-// }
+func (p ProduceAPI) Name() string {
+	return "Produce"
+}
 
-// func (p ProduceAPI) GetRequest() Request {
-// 	return p.Request
-// }
+func (p ProduceAPI) GetRequest() Request {
+	return p.Request
+}
 
-// func (p ProduceAPI) GeneratePayload(encoder *protocol.Encoder) error {
-// 	req := models.ProduceRequest{}
-// 	err := req.Decode(p.GetRequest().Decoder, int(p.GetRequest().Header.APIVersion))
-// 	if err != nil {
-// 		return err
-// 	}
+func (p ProduceAPI) GetHeaderVersion(requestVersion int16) int16 {
+	return (&protocol.ProduceResponse{Version: requestVersion}).GetHeaderVersion()
+}
 
-// 	// for _, topic := range req.TopicData {
-// 	// 	for _, partition := range topic.PartitionData {
-// 	// 		slog.Debug("Received records", "records", partition.Records.String())
-// 	// 	}
-// 	// }
+// TODO: this is a placeholder function for now. We need to implement a backend that handles cluster topology in order to implement the API correctly and consume the messages.
+func (p ProduceAPI) GeneratePayload() ([]byte, error) {
+	req := protocol.ProduceRequest{}
+	_, err := protocol.VersionedDecode(p.GetRequest().Message, &req, p.GetRequest().Header.RequestApiVersion)
+	if err != nil {
+		return nil, err
+	}
 
-// 	slog.Debug("Produce request", "req", req)
+	resp := protocol.ProduceResponse{
+		Version: p.GetRequest().Header.RequestApiVersion,
+	}
 
-// 	return nil
-// }
+	for _, topic := range req.TopicData {
+		topicResponse := protocol.TopicProduceResponse{}
+		topicResponse.Version = resp.Version
+		topicResponse.Name = topic.Name
+
+		for _, partition := range topic.PartitionData {
+			slog.Debug("Received records", "records", partition.Records)
+
+			topicResponse.PartitionResponses = append(topicResponse.PartitionResponses, protocol.PartitionProduceResponse{
+				Version:    resp.Version,
+				Index:      partition.Index,
+				ErrorCode:  int16(utils.ErrNoError),
+				BaseOffset: partition.Records.BaseOffset,
+				// TODO: this needs to be implemented, see documentation for details
+				LogAppendTimeMs: -1,
+				LogStartOffset:  0,
+				// TODO: Don't forget to handle errors when the protocol is fully implemented
+			})
+		}
+
+		resp.Responses = append(resp.Responses, topicResponse)
+	}
+
+	return protocol.Encode(&resp)
+}

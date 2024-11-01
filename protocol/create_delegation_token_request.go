@@ -112,13 +112,15 @@ func (r *CreateDelegationTokenRequest) decode(pd packetDecoder, version int16) (
 	if numRenewers, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Renewers = make([]CreatableRenewers, numRenewers)
-	for i := 0; i < numRenewers; i++ {
-		var block CreatableRenewers
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numRenewers > 0 {
+		r.Renewers = make([]CreatableRenewers, numRenewers)
+		for i := 0; i < numRenewers; i++ {
+			var block CreatableRenewers
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Renewers[i] = block
 		}
-		r.Renewers[i] = block
 	}
 
 	if r.MaxLifetimeMs, err = pd.getInt64(); err != nil {

@@ -89,13 +89,15 @@ func (t *TopicData_EndQuorumEpochRequest) decode(pd packetDecoder, version int16
 	if numPartitions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	t.Partitions = make([]PartitionData_EndQuorumEpochRequest, numPartitions)
-	for i := 0; i < numPartitions; i++ {
-		var block PartitionData_EndQuorumEpochRequest
-		if err := block.decode(pd, t.Version); err != nil {
-			return err
+	if numPartitions > 0 {
+		t.Partitions = make([]PartitionData_EndQuorumEpochRequest, numPartitions)
+		for i := 0; i < numPartitions; i++ {
+			var block PartitionData_EndQuorumEpochRequest
+			if err := block.decode(pd, t.Version); err != nil {
+				return err
+			}
+			t.Partitions[i] = block
 		}
-		t.Partitions[i] = block
 	}
 
 	return nil
@@ -137,13 +139,15 @@ func (r *EndQuorumEpochRequest) decode(pd packetDecoder, version int16) (err err
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Topics = make([]TopicData_EndQuorumEpochRequest, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block TopicData_EndQuorumEpochRequest
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		r.Topics = make([]TopicData_EndQuorumEpochRequest, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block TopicData_EndQuorumEpochRequest
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Topics[i] = block
 		}
-		r.Topics[i] = block
 	}
 
 	return nil

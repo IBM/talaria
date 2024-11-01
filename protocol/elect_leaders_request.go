@@ -96,13 +96,15 @@ func (r *ElectLeadersRequest) decode(pd packetDecoder, version int16) (err error
 	if numTopicPartitions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.TopicPartitions = make([]TopicPartitions_ElectLeadersRequest, numTopicPartitions)
-	for i := 0; i < numTopicPartitions; i++ {
-		var block TopicPartitions_ElectLeadersRequest
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTopicPartitions > 0 {
+		r.TopicPartitions = make([]TopicPartitions_ElectLeadersRequest, numTopicPartitions)
+		for i := 0; i < numTopicPartitions; i++ {
+			var block TopicPartitions_ElectLeadersRequest
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.TopicPartitions[i] = block
 		}
-		r.TopicPartitions[i] = block
 	}
 
 	if r.TimeoutMs, err = pd.getInt32(); err != nil {

@@ -175,6 +175,9 @@ func (r *JoinGroupResponse) decode(pd packetDecoder, version int16) (err error) 
 			return err
 		}
 	} else {
+		def := ""
+		r.ProtocolName = &def
+
 		if *r.ProtocolName, err = pd.getString(); err != nil {
 			return err
 		}
@@ -198,13 +201,15 @@ func (r *JoinGroupResponse) decode(pd packetDecoder, version int16) (err error) 
 	if numMembers, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Members = make([]JoinGroupResponseMember, numMembers)
-	for i := 0; i < numMembers; i++ {
-		var block JoinGroupResponseMember
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numMembers > 0 {
+		r.Members = make([]JoinGroupResponseMember, numMembers)
+		for i := 0; i < numMembers; i++ {
+			var block JoinGroupResponseMember
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Members[i] = block
 		}
-		r.Members[i] = block
 	}
 
 	if r.Version >= 6 {

@@ -90,9 +90,9 @@ func Decode(buf []byte, in decoder) error {
 	return nil
 }
 
-func VersionedDecode(buf []byte, in versionedDecoder, version int16) error {
+func VersionedDecode(buf []byte, in versionedDecoder, version int16) (int, error) {
 	if buf == nil {
-		return nil
+		return -1, nil
 	}
 
 	helper := realDecoder{
@@ -100,12 +100,8 @@ func VersionedDecode(buf []byte, in versionedDecoder, version int16) error {
 	}
 	err := in.decode(&helper, version)
 	if err != nil {
-		return err
+		return -1, err
 	}
 
-	if helper.off != len(buf) {
-		return fmt.Errorf("invalid length (off=%d, len=%d)", helper.off, len(buf))
-	}
-
-	return nil
+	return helper.off, nil
 }

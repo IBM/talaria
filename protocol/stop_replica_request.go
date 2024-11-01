@@ -211,13 +211,15 @@ func (t *StopReplicaTopicState) decode(pd packetDecoder, version int16) (err err
 		if numPartitionStates, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		t.PartitionStates = make([]StopReplicaPartitionState, numPartitionStates)
-		for i := 0; i < numPartitionStates; i++ {
-			var block StopReplicaPartitionState
-			if err := block.decode(pd, t.Version); err != nil {
-				return err
+		if numPartitionStates > 0 {
+			t.PartitionStates = make([]StopReplicaPartitionState, numPartitionStates)
+			for i := 0; i < numPartitionStates; i++ {
+				var block StopReplicaPartitionState
+				if err := block.decode(pd, t.Version); err != nil {
+					return err
+				}
+				t.PartitionStates[i] = block
 			}
-			t.PartitionStates[i] = block
 		}
 	}
 
@@ -345,13 +347,15 @@ func (r *StopReplicaRequest) decode(pd packetDecoder, version int16) (err error)
 		if numUngroupedPartitions, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.UngroupedPartitions = make([]StopReplicaPartitionV0, numUngroupedPartitions)
-		for i := 0; i < numUngroupedPartitions; i++ {
-			var block StopReplicaPartitionV0
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numUngroupedPartitions > 0 {
+			r.UngroupedPartitions = make([]StopReplicaPartitionV0, numUngroupedPartitions)
+			for i := 0; i < numUngroupedPartitions; i++ {
+				var block StopReplicaPartitionV0
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.UngroupedPartitions[i] = block
 			}
-			r.UngroupedPartitions[i] = block
 		}
 	}
 
@@ -360,13 +364,15 @@ func (r *StopReplicaRequest) decode(pd packetDecoder, version int16) (err error)
 		if numTopics, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.Topics = make([]StopReplicaTopicV1, numTopics)
-		for i := 0; i < numTopics; i++ {
-			var block StopReplicaTopicV1
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numTopics > 0 {
+			r.Topics = make([]StopReplicaTopicV1, numTopics)
+			for i := 0; i < numTopics; i++ {
+				var block StopReplicaTopicV1
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.Topics[i] = block
 			}
-			r.Topics[i] = block
 		}
 	}
 
@@ -375,13 +381,15 @@ func (r *StopReplicaRequest) decode(pd packetDecoder, version int16) (err error)
 		if numTopicStates, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.TopicStates = make([]StopReplicaTopicState, numTopicStates)
-		for i := 0; i < numTopicStates; i++ {
-			var block StopReplicaTopicState
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numTopicStates > 0 {
+			r.TopicStates = make([]StopReplicaTopicState, numTopicStates)
+			for i := 0; i < numTopicStates; i++ {
+				var block StopReplicaTopicState
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.TopicStates[i] = block
 			}
-			r.TopicStates[i] = block
 		}
 	}
 

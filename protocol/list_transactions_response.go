@@ -106,13 +106,15 @@ func (r *ListTransactionsResponse) decode(pd packetDecoder, version int16) (err 
 	if numTransactionStates, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.TransactionStates = make([]TransactionState_ListTransactionsResponse, numTransactionStates)
-	for i := 0; i < numTransactionStates; i++ {
-		var block TransactionState_ListTransactionsResponse
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTransactionStates > 0 {
+		r.TransactionStates = make([]TransactionState_ListTransactionsResponse, numTransactionStates)
+		for i := 0; i < numTransactionStates; i++ {
+			var block TransactionState_ListTransactionsResponse
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.TransactionStates[i] = block
 		}
-		r.TransactionStates[i] = block
 	}
 
 	if _, err = pd.getEmptyTaggedFieldArray(); err != nil {

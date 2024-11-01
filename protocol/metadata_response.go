@@ -240,6 +240,9 @@ func (t *MetadataResponseTopic) decode(pd packetDecoder, version int16) (err err
 			return err
 		}
 	} else {
+		def := ""
+		t.Name = &def
+
 		if *t.Name, err = pd.getString(); err != nil {
 			return err
 		}
@@ -261,13 +264,15 @@ func (t *MetadataResponseTopic) decode(pd packetDecoder, version int16) (err err
 	if numPartitions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	t.Partitions = make([]MetadataResponsePartition, numPartitions)
-	for i := 0; i < numPartitions; i++ {
-		var block MetadataResponsePartition
-		if err := block.decode(pd, t.Version); err != nil {
-			return err
+	if numPartitions > 0 {
+		t.Partitions = make([]MetadataResponsePartition, numPartitions)
+		for i := 0; i < numPartitions; i++ {
+			var block MetadataResponsePartition
+			if err := block.decode(pd, t.Version); err != nil {
+				return err
+			}
+			t.Partitions[i] = block
 		}
-		t.Partitions[i] = block
 	}
 
 	if t.Version >= 8 {
@@ -337,7 +342,7 @@ func (r *MetadataResponse) encode(pe packetEncoder) (err error) {
 		}
 	}
 
-	if r.Version >= 8 && r.Version <= 1 {
+	if r.Version >= 8 && r.Version <= 10 {
 		pe.putInt32(r.ClusterAuthorizedOperations)
 	}
 
@@ -362,13 +367,15 @@ func (r *MetadataResponse) decode(pd packetDecoder, version int16) (err error) {
 	if numBrokers, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Brokers = make([]MetadataResponseBroker, numBrokers)
-	for i := 0; i < numBrokers; i++ {
-		var block MetadataResponseBroker
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numBrokers > 0 {
+		r.Brokers = make([]MetadataResponseBroker, numBrokers)
+		for i := 0; i < numBrokers; i++ {
+			var block MetadataResponseBroker
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Brokers[i] = block
 		}
-		r.Brokers[i] = block
 	}
 
 	if r.Version >= 2 {
@@ -387,16 +394,18 @@ func (r *MetadataResponse) decode(pd packetDecoder, version int16) (err error) {
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Topics = make([]MetadataResponseTopic, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block MetadataResponseTopic
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		r.Topics = make([]MetadataResponseTopic, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block MetadataResponseTopic
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Topics[i] = block
 		}
-		r.Topics[i] = block
 	}
 
-	if r.Version >= 8 && r.Version <= 1 {
+	if r.Version >= 8 && r.Version <= 10 {
 		if r.ClusterAuthorizedOperations, err = pd.getInt32(); err != nil {
 			return err
 		}

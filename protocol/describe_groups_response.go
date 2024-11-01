@@ -176,13 +176,15 @@ func (g *DescribedGroup) decode(pd packetDecoder, version int16) (err error) {
 	if numMembers, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	g.Members = make([]DescribedGroupMember, numMembers)
-	for i := 0; i < numMembers; i++ {
-		var block DescribedGroupMember
-		if err := block.decode(pd, g.Version); err != nil {
-			return err
+	if numMembers > 0 {
+		g.Members = make([]DescribedGroupMember, numMembers)
+		for i := 0; i < numMembers; i++ {
+			var block DescribedGroupMember
+			if err := block.decode(pd, g.Version); err != nil {
+				return err
+			}
+			g.Members[i] = block
 		}
-		g.Members[i] = block
 	}
 
 	if g.Version >= 3 {
@@ -246,13 +248,15 @@ func (r *DescribeGroupsResponse) decode(pd packetDecoder, version int16) (err er
 	if numGroups, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Groups = make([]DescribedGroup, numGroups)
-	for i := 0; i < numGroups; i++ {
-		var block DescribedGroup
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numGroups > 0 {
+		r.Groups = make([]DescribedGroup, numGroups)
+		for i := 0; i < numGroups; i++ {
+			var block DescribedGroup
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Groups[i] = block
 		}
-		r.Groups[i] = block
 	}
 
 	if r.Version >= 5 {

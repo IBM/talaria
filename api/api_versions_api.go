@@ -1,8 +1,7 @@
 package api
 
 import (
-	"log/slog"
-	"talaria/protocol"
+	"opentalaria/protocol"
 )
 
 type APIVersionsAPI struct {
@@ -20,12 +19,10 @@ func (a APIVersionsAPI) GetRequest() Request {
 func (a APIVersionsAPI) GeneratePayload() ([]byte, error) {
 	// handle response
 	apiVersionRequest := protocol.ApiVersionsRequest{}
-	err := protocol.VersionedDecode(a.Request.Message, &apiVersionRequest, a.GetRequest().Header.RequestApiVersion)
+	_, err := protocol.VersionedDecode(a.Request.Message, &apiVersionRequest, a.Request.Header.RequestApiVersion)
 	if err != nil {
 		return nil, err
 	}
-
-	slog.Debug("API Versions request", "req", apiVersionRequest)
 
 	response := NewAPIVersionsResponse(a.GetRequest().Header.RequestApiVersion)
 	return protocol.Encode(response)

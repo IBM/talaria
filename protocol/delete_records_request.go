@@ -82,13 +82,15 @@ func (t *DeleteRecordsTopic) decode(pd packetDecoder, version int16) (err error)
 	if numPartitions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	t.Partitions = make([]DeleteRecordsPartition, numPartitions)
-	for i := 0; i < numPartitions; i++ {
-		var block DeleteRecordsPartition
-		if err := block.decode(pd, t.Version); err != nil {
-			return err
+	if numPartitions > 0 {
+		t.Partitions = make([]DeleteRecordsPartition, numPartitions)
+		for i := 0; i < numPartitions; i++ {
+			var block DeleteRecordsPartition
+			if err := block.decode(pd, t.Version); err != nil {
+				return err
+			}
+			t.Partitions[i] = block
 		}
-		t.Partitions[i] = block
 	}
 
 	if t.Version >= 2 {
@@ -138,13 +140,15 @@ func (r *DeleteRecordsRequest) decode(pd packetDecoder, version int16) (err erro
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Topics = make([]DeleteRecordsTopic, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block DeleteRecordsTopic
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		r.Topics = make([]DeleteRecordsTopic, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block DeleteRecordsTopic
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Topics[i] = block
 		}
-		r.Topics[i] = block
 	}
 
 	if r.TimeoutMs, err = pd.getInt32(); err != nil {

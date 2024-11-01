@@ -129,13 +129,15 @@ func (r *LeaveGroupRequest) decode(pd packetDecoder, version int16) (err error) 
 		if numMembers, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		r.Members = make([]MemberIdentity, numMembers)
-		for i := 0; i < numMembers; i++ {
-			var block MemberIdentity
-			if err := block.decode(pd, r.Version); err != nil {
-				return err
+		if numMembers > 0 {
+			r.Members = make([]MemberIdentity, numMembers)
+			for i := 0; i < numMembers; i++ {
+				var block MemberIdentity
+				if err := block.decode(pd, r.Version); err != nil {
+					return err
+				}
+				r.Members[i] = block
 			}
-			r.Members[i] = block
 		}
 	}
 

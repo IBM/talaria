@@ -141,26 +141,30 @@ func (p *PartitionData_DescribeQuorumResponse) decode(pd packetDecoder, version 
 	if numCurrentVoters, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	p.CurrentVoters = make([]ReplicaState_DescribeQuorumResponse, numCurrentVoters)
-	for i := 0; i < numCurrentVoters; i++ {
-		var block ReplicaState_DescribeQuorumResponse
-		if err := block.decode(pd, p.Version); err != nil {
-			return err
+	if numCurrentVoters > 0 {
+		p.CurrentVoters = make([]ReplicaState_DescribeQuorumResponse, numCurrentVoters)
+		for i := 0; i < numCurrentVoters; i++ {
+			var block ReplicaState_DescribeQuorumResponse
+			if err := block.decode(pd, p.Version); err != nil {
+				return err
+			}
+			p.CurrentVoters[i] = block
 		}
-		p.CurrentVoters[i] = block
 	}
 
 	var numObservers int
 	if numObservers, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	p.Observers = make([]ReplicaState_DescribeQuorumResponse, numObservers)
-	for i := 0; i < numObservers; i++ {
-		var block ReplicaState_DescribeQuorumResponse
-		if err := block.decode(pd, p.Version); err != nil {
-			return err
+	if numObservers > 0 {
+		p.Observers = make([]ReplicaState_DescribeQuorumResponse, numObservers)
+		for i := 0; i < numObservers; i++ {
+			var block ReplicaState_DescribeQuorumResponse
+			if err := block.decode(pd, p.Version); err != nil {
+				return err
+			}
+			p.Observers[i] = block
 		}
-		p.Observers[i] = block
 	}
 
 	if _, err = pd.getEmptyTaggedFieldArray(); err != nil {
@@ -208,13 +212,15 @@ func (t *TopicData_DescribeQuorumResponse) decode(pd packetDecoder, version int1
 	if numPartitions, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	t.Partitions = make([]PartitionData_DescribeQuorumResponse, numPartitions)
-	for i := 0; i < numPartitions; i++ {
-		var block PartitionData_DescribeQuorumResponse
-		if err := block.decode(pd, t.Version); err != nil {
-			return err
+	if numPartitions > 0 {
+		t.Partitions = make([]PartitionData_DescribeQuorumResponse, numPartitions)
+		for i := 0; i < numPartitions; i++ {
+			var block PartitionData_DescribeQuorumResponse
+			if err := block.decode(pd, t.Version); err != nil {
+				return err
+			}
+			t.Partitions[i] = block
 		}
-		t.Partitions[i] = block
 	}
 
 	if _, err = pd.getEmptyTaggedFieldArray(); err != nil {
@@ -260,13 +266,15 @@ func (r *DescribeQuorumResponse) decode(pd packetDecoder, version int16) (err er
 	if numTopics, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Topics = make([]TopicData_DescribeQuorumResponse, numTopics)
-	for i := 0; i < numTopics; i++ {
-		var block TopicData_DescribeQuorumResponse
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numTopics > 0 {
+		r.Topics = make([]TopicData_DescribeQuorumResponse, numTopics)
+		for i := 0; i < numTopics; i++ {
+			var block TopicData_DescribeQuorumResponse
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Topics[i] = block
 		}
-		r.Topics[i] = block
 	}
 
 	if _, err = pd.getEmptyTaggedFieldArray(); err != nil {

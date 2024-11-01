@@ -143,13 +143,15 @@ func (p *PartitionProduceResponse) decode(pd packetDecoder, version int16) (err 
 		if numRecordErrors, err = pd.getArrayLength(); err != nil {
 			return err
 		}
-		p.RecordErrors = make([]BatchIndexAndErrorMessage, numRecordErrors)
-		for i := 0; i < numRecordErrors; i++ {
-			var block BatchIndexAndErrorMessage
-			if err := block.decode(pd, p.Version); err != nil {
-				return err
+		if numRecordErrors > 0 {
+			p.RecordErrors = make([]BatchIndexAndErrorMessage, numRecordErrors)
+			for i := 0; i < numRecordErrors; i++ {
+				var block BatchIndexAndErrorMessage
+				if err := block.decode(pd, p.Version); err != nil {
+					return err
+				}
+				p.RecordErrors[i] = block
 			}
-			p.RecordErrors[i] = block
 		}
 	}
 
@@ -208,13 +210,15 @@ func (r *TopicProduceResponse) decode(pd packetDecoder, version int16) (err erro
 	if numPartitionResponses, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.PartitionResponses = make([]PartitionProduceResponse, numPartitionResponses)
-	for i := 0; i < numPartitionResponses; i++ {
-		var block PartitionProduceResponse
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numPartitionResponses > 0 {
+		r.PartitionResponses = make([]PartitionProduceResponse, numPartitionResponses)
+		for i := 0; i < numPartitionResponses; i++ {
+			var block PartitionProduceResponse
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.PartitionResponses[i] = block
 		}
-		r.PartitionResponses[i] = block
 	}
 
 	if r.Version >= 9 {
@@ -266,13 +270,15 @@ func (r *ProduceResponse) decode(pd packetDecoder, version int16) (err error) {
 	if numResponses, err = pd.getArrayLength(); err != nil {
 		return err
 	}
-	r.Responses = make([]TopicProduceResponse, numResponses)
-	for i := 0; i < numResponses; i++ {
-		var block TopicProduceResponse
-		if err := block.decode(pd, r.Version); err != nil {
-			return err
+	if numResponses > 0 {
+		r.Responses = make([]TopicProduceResponse, numResponses)
+		for i := 0; i < numResponses; i++ {
+			var block TopicProduceResponse
+			if err := block.decode(pd, r.Version); err != nil {
+				return err
+			}
+			r.Responses[i] = block
 		}
-		r.Responses[i] = block
 	}
 
 	if r.Version >= 1 {
