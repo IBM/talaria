@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
-	"talaria/protocol"
+	"opentalaria/protocol"
 )
 
 type API interface {

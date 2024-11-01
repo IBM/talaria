@@ -1,4 +1,4 @@
-module talaria
+module opentalaria
 
 go 1.21.6
 

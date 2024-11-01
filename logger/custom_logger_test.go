@@ -5,10 +5,10 @@ import (
 	"context"
 	"io"
 	"log/slog"
+	"opentalaria/utils"
 	"os"
 	"strings"
 	"sync"
-	"talaria/utils"
 	"testing"
 )
 
