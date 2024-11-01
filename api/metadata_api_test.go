@@ -1,8 +1,8 @@
 package api
 
 import (
+	"opentalaria/protocol"
 	"reflect"
-	"talaria/protocol"
 	"testing"
 )
 

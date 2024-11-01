@@ -1,8 +1,8 @@
 package api
 
 import (
-	"talaria/protocol"
-	"talaria/utils"
+	"opentalaria/protocol"
+	"opentalaria/utils"
 	"time"
 )
 

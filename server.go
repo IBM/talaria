@@ -6,9 +6,9 @@ import (
 	"io"
 	"log/slog"
 	"net"
-	"talaria/api"
-	"talaria/protocol"
-	"talaria/utils"
+	"opentalaria/api"
+	"opentalaria/protocol"
+	"opentalaria/utils"
 )
 
 type Server struct {

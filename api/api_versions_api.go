@@ -1,7 +1,7 @@
 package api
 
 import (
-	"talaria/protocol"
+	"opentalaria/protocol"
 )
 
 type APIVersionsAPI struct {
