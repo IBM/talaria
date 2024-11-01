@@ -106,8 +106,13 @@ Exit:
 				break Exit
 			}
 			apiHandler = api.MetadataAPI{Request: req}
-		// case protocol.ProduceKey:
-		// 	apiHandler = api.ProduceAPI{Request: request}
+		case (&protocol.ProduceRequest{}).GetKey():
+			req, err := makeRequest(messageBytes, client.conn, (&protocol.ProduceRequest{Version: header.RequestApiVersion}).GetHeaderVersion())
+			if err != nil {
+				slog.Error("error creating request", "err", err)
+				break Exit
+			}
+			apiHandler = api.ProduceAPI{Request: req}
 		default:
 			slog.Error("Unknown API key", "key", header.RequestApiKey)
 		}

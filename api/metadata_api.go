@@ -1,7 +1,6 @@
 package api
 
 import (
-	"log/slog"
 	"opentalaria/protocol"
 	"opentalaria/utils"
 	"time"
@@ -29,8 +28,6 @@ func (m MetadataAPI) GeneratePayload() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	slog.Debug("Metadata request", "req", req)
 
 	response := GenerateMetadataResponse(m.GetRequest().Header.RequestApiVersion)
 	return protocol.Encode(response)
