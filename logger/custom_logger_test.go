@@ -3,6 +3,8 @@ package logger
 import (
 	"bytes"
 	"context"
+	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"reflect"
@@ -107,6 +109,16 @@ func TestCustomHandler_Handle(t *testing.T) {
 	recWithAttr := slog.NewRecord(time.Now(), slog.LevelInfo, "some message", pcs[0])
 	recWithAttr.AddAttrs(slog.Attr{Key: "key1", Value: slog.AnyValue("value1")})
 
+	recWithGroup := slog.NewRecord(time.Now(), slog.LevelInfo, "message with group", pcs[0])
+	recWithGroup.AddAttrs(slog.Group("Group-test", slog.String("c-group", "d-group"), "e-group", "f-group"))
+
+	recWithEmptyGroup := slog.NewRecord(time.Now(), slog.LevelInfo, "message empty with group", pcs[0])
+	recWithEmptyGroup.AddAttrs(slog.Group("", slog.String("", ""), "", ""))
+
+	parsedTime, _ := time.Parse("2006-01-02 15:04:05", "2024-11-01 15:04:05")
+	recWithTime := slog.NewRecord(time.Now(), slog.LevelInfo, "message with time kind", pcs[0])
+	recWithTime.AddAttrs(slog.Time("time", parsedTime), slog.Attr{Key: "key1", Value: slog.AnyValue("value1")})
+
 	type fields struct {
 		opts           Options
 		preformatted   []byte
@@ -120,14 +132,32 @@ func TestCustomHandler_Handle(t *testing.T) {
 		r   slog.Record
 	}
 	tests := []struct {
-		name                               string
-		fields                             fields
-		args                               args
-		wantErr                            bool
-		want, wantTime, wantLevel, wantMsg string
+		name        string
+		fields      fields
+		args        args
+		wantErr     bool
+		logMsgValue string
+		checks      []check // checks is a list of checks to run on the result.
 	}{
-		{name: "Happy flow retriving INFO", fields: fields{mu: &sync.Mutex{}, out: &b}, args: args{r: slog.NewRecord(time.Now(), slog.LevelInfo, "some message", pcs[0])}, wantErr: false, want: "some message", wantTime: "time=", wantLevel: "level=", wantMsg: "msg="},
-		{name: "Happy flow retriving INFO with attributes", fields: fields{mu: &sync.Mutex{}, out: &b}, args: args{r: recWithAttr}, wantErr: false, want: "value1", wantTime: "time=", wantLevel: "level=", wantMsg: "msg="},
+		{name: "Happy flow retriving INFO", fields: fields{mu: &sync.Mutex{}, out: &b}, args: args{r: slog.NewRecord(time.Now(), slog.LevelInfo, "some message", pcs[0])}, wantErr: false, logMsgValue: "some message", checks: []check{
+			hasKey("msg="),
+			hasKey("time="),
+			hasKey("level="),
+		}},
+		{name: "Happy flow retriving INFO with attributes", fields: fields{mu: &sync.Mutex{}, out: &b}, args: args{r: recWithAttr}, wantErr: false, logMsgValue: "value1", checks: []check{
+			hasKey("key1"),
+			hasKey("value1"),
+		}},
+		{name: "Happy flow retriving INFO with group", fields: fields{mu: &sync.Mutex{}, out: &b}, args: args{r: recWithGroup}, wantErr: false, logMsgValue: "value1", checks: []check{
+			hasKey("Group-test"),
+			hasKey("c-group"),
+			hasKey("d-group"),
+			hasKey("e-group"),
+			hasKey("f-group"),
+		}},
+		{name: "Happy flow retriving INFO with kind time", fields: fields{mu: &sync.Mutex{}, out: &b}, args: args{r: recWithTime}, wantErr: false, logMsgValue: "message with time kind", checks: []check{
+			hasKey("time:"),
+		}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -146,22 +176,36 @@ func TestCustomHandler_Handle(t *testing.T) {
 
 			got := b.String()
 
-			if !strings.Contains(got, tt.wantTime) {
-				t.Errorf("Custome logger should contain %s", tt.wantTime)
+			if !strings.Contains(got, tt.logMsgValue) {
+				t.Errorf("Custome logger should contain %s", tt.logMsgValue)
 			}
 
-			if !strings.Contains(got, tt.wantLevel) {
-				t.Errorf("Custome logger should contain %s", tt.wantLevel)
-			}
-
-			if !strings.Contains(got, tt.wantMsg) {
-				t.Errorf("Custome logger should contain %s", tt.wantMsg)
-			}
-
-			if !strings.Contains(got, tt.want) {
-				t.Errorf("Custome logger should contain %s", tt.want)
+			n := map[string]any{"test": got}
+			for _, check := range tt.checks {
+				if p := check(n); p != "" {
+					t.Errorf("%s: %s", p, tt.name)
+				}
 			}
 
 		})
+	}
+}
+
+type check func(map[string]any) string
+
+func hasKey(key string) check {
+	return func(m map[string]any) string {
+		jsonData, err := json.Marshal(m["test"])
+		if err != nil {
+			return fmt.Sprintf("error converting map to JSON:%q", err)
+		}
+
+		got := string(jsonData)
+
+		if !strings.Contains(got, key) {
+			return fmt.Sprintf("missing key %q", key)
+		}
+
+		return ""
 	}
 }

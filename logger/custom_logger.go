@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"runtime"
 	"slices"
 	"strconv"
 	"sync"
@@ -65,18 +66,17 @@ func (ch *CustomHandler) Handle(ctx context.Context, r slog.Record) error {
 	}()
 	lev, colCode := colorLogLevel(r.Level.String())
 
-	//TODO reivew
-	// if r.PC != 0 {
-	// 	fs := runtime.CallersFrames([]uintptr{r.PC})
-	// 	f, _ := fs.Next()
-	// 	// Optimize to minimize allocation.
-	// 	srcbufp := allocBuf()
-	// 	defer freeBuf(srcbufp)
-	// 	*srcbufp = append(*srcbufp, f.File...)
-	// 	*srcbufp = append(*srcbufp, ':')
-	// 	*srcbufp = strconv.AppendInt(*srcbufp, int64(f.Line), 10)
-	// 	buf = ch.appendAttr(buf, slog.String(slog.SourceKey, string(*srcbufp)), 0)
-	// }
+	if r.PC != 0 {
+		fs := runtime.CallersFrames([]uintptr{r.PC})
+		f, _ := fs.Next()
+		// Optimize to minimize allocation.
+		srcbufp := allocBuf()
+		defer freeBuf(srcbufp)
+		*srcbufp = append(*srcbufp, f.File...)
+		*srcbufp = append(*srcbufp, ':')
+		*srcbufp = strconv.AppendInt(*srcbufp, int64(f.Line), 10)
+		buf = ch.appendAttr(buf, slog.String(slog.SourceKey, string(*srcbufp)), colCode, 0)
+	}
 
 	buf = formatLoggerOutput(buf, lev, r.Message, colCode)
 
@@ -172,13 +172,13 @@ func (ch *CustomHandler) appendAttr(buf []byte, a slog.Attr, colCode, indentLeve
 		buf = append(buf, a.Key...)
 		buf = append(buf, ": "...)
 		buf = strconv.AppendQuote(buf, a.Value.String())
-		//buf = append(buf, '\n')
+		//buf = append(buf, ' ')
 	case slog.KindTime:
 		// Write times in a standard way, without the monotonic time.
 		buf = append(buf, a.Key...)
 		buf = append(buf, ": "...)
 		buf = a.Value.Time().AppendFormat(buf, time.RFC3339Nano)
-		//buf = append(buf, '\n')
+		//buf = append(buf, ' ')
 	case slog.KindGroup:
 		attrs := a.Value.Group()
 		// Ignore empty groups.
@@ -194,7 +194,7 @@ func (ch *CustomHandler) appendAttr(buf []byte, a slog.Attr, colCode, indentLeve
 		for _, ga := range attrs {
 			buf = ch.appendAttr(buf, ga, colCode, indentLevel)
 		}
-
+		//buf = append(buf, ' ')
 	default:
 		buf = append(buf, a.Key...)
 		buf = append(buf, ": "...)
