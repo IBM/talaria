@@ -43,6 +43,8 @@ type Options struct {
 	Level slog.Leveler
 }
 
+// NewCustomHandler creates a new CustomHandler instance.
+// If no log level is provided in opts, LevelInfo is used by default.
 func NewCustomHandler(out io.Writer, opts *Options) *CustomHandler {
 	h := &CustomHandler{out: out, mu: &sync.Mutex{}}
 	if opts != nil {
@@ -80,9 +82,6 @@ func (ch *CustomHandler) Handle(ctx context.Context, r slog.Record) error {
 	ch.mu.Lock()
 	defer ch.mu.Unlock()
 	_, err := ch.out.Write(buf)
-	if err != nil {
-		fmt.Println("write out error ", err)
-	}
 	return err
 }
 
