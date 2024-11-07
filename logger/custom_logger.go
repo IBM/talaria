@@ -99,38 +99,6 @@ func (ch *CustomHandler) Handle(ctx context.Context, r slog.Record) error {
 	return err
 }
 
-func formatLoggerOutput(buf []byte, lev, msg string, colCode int) []byte {
-	timestamp := time.Now().Format(time.RFC3339Nano)
-	buf = append(buf, "time="...)
-	buf = append(buf, painter(colCode, timestamp)...)
-	buf = append(buf, " level="...)
-	buf = append(buf, lev...)
-	buf = append(buf, " msg="...)
-	buf = append(buf, painter(colCode, msg)...)
-	return buf
-}
-
-// Painter is a function that takes in a Bash color code and a string, and returns a string with the given string painted in the specified color.
-func painter(colorCode int, msg string) string {
-	//formatting message with ANSI escape sequence and selected color
-	return fmt.Sprintf("\033[%sm%s%s", strconv.Itoa(colorCode), msg, noColor)
-}
-
-func colorLogLevel(level string) (string, int) {
-	if level == info {
-		return painter(green, info), green
-	} else if level == debug {
-		return painter(white, debug), gray
-	} else if level == err {
-		return painter(red, err), red
-	} else if level == warn {
-		return painter(yellow, warn), yellow
-	} else {
-		return painter(white, info), gray
-	}
-
-}
-
 func (ch *CustomHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	return level >= ch.opts.Level.Level()
 }
@@ -214,6 +182,38 @@ func (ch *CustomHandler) WithGroup(name string) slog.Handler {
 	copy(chCopy.unopenedGroups, ch.unopenedGroups)
 	chCopy.unopenedGroups[len(chCopy.unopenedGroups)-1] = name
 	return &chCopy
+}
+
+func formatLoggerOutput(buf []byte, lev, msg string, colCode int) []byte {
+	timestamp := time.Now().Format(time.RFC3339Nano)
+	buf = append(buf, "time="...)
+	buf = append(buf, painter(colCode, timestamp)...)
+	buf = append(buf, " level="...)
+	buf = append(buf, lev...)
+	buf = append(buf, " msg="...)
+	buf = append(buf, painter(colCode, msg)...)
+	return buf
+}
+
+// Painter is a function that takes in a Bash color code and a string, and returns a string with the given string painted in the specified color.
+func painter(colorCode int, msg string) string {
+	//formatting message with ANSI escape sequence and selected color
+	return fmt.Sprintf("\033[%sm%s%s", strconv.Itoa(colorCode), msg, noColor)
+}
+
+func colorLogLevel(level string) (string, int) {
+	if level == info {
+		return painter(green, info), green
+	} else if level == debug {
+		return painter(white, debug), gray
+	} else if level == err {
+		return painter(red, err), red
+	} else if level == warn {
+		return painter(yellow, warn), yellow
+	} else {
+		return painter(white, info), gray
+	}
+
 }
 
 func (ch *CustomHandler) appendUnopenedGroups(buf []byte, indentLevel int) []byte {

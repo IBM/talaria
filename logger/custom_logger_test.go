@@ -190,6 +190,58 @@ func TestCustomHandler_Handle(t *testing.T) {
 	}
 }
 
+func TestCustomHandler_WithAttrs(t *testing.T) {
+	var b bytes.Buffer
+	attrs := []slog.Attr{
+		slog.String("username", "johndoe"),
+		slog.Int("user_id", 42),
+		slog.Bool("active", true),
+		slog.Float64("score", 98.5),
+	}
+
+	type fields struct {
+		opts           Options
+		preformatted   []byte
+		unopenedGroups []string
+		indentLevel    int
+		mu             *sync.Mutex
+		out            io.Writer
+	}
+	type args struct {
+		attrs []slog.Attr
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   string
+	}{
+		{name: "logger WithAttrs", fields: fields{mu: &sync.Mutex{}, out: &b}, args: args{attrs}, want: "user_id:42active:truescore:98.5"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ch := &CustomHandler{
+				opts:           tt.fields.opts,
+				preformatted:   tt.fields.preformatted,
+				unopenedGroups: tt.fields.unopenedGroups,
+				indentLevel:    tt.fields.indentLevel,
+				mu:             tt.fields.mu,
+				out:            tt.fields.out,
+			}
+
+			got := ch.WithAttrs(tt.args.attrs)
+			chCopy, ok := got.(*CustomHandler)
+			if !ok {
+				t.Errorf("Custom logger should be type of *CustomHandler")
+			}
+			trimmed := utils.TrimWhitespaces(string(chCopy.preformatted))
+			if !strings.Contains(trimmed, tt.want) {
+				t.Errorf("Custom logger should contain %s", tt.want)
+			}
+		})
+	}
+}
+
 type check func(map[string]any) string
 
 func hasKey(key string) check {
