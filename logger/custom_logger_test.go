@@ -85,12 +85,12 @@ func TestNewCustomeHandler(t *testing.T) {
 		want    *CustomHandler
 		wantOut string
 	}{
-		{name: "Happy flow retriving INFO", want: NewCustomeHandler(&buf, nil)},
+		{name: "Happy flow retriving INFO", want: NewCustomHandler(&buf, nil)},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out := &bytes.Buffer{}
-			if got := NewCustomeHandler(out, tt.args.opts); !reflect.DeepEqual(got, tt.want) {
+			if got := NewCustomHandler(out, tt.args.opts); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewCustomeHandler() = %v, want %v", got, tt.want)
 			}
 			if gotOut := out.String(); gotOut != tt.wantOut {

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"runtime"
 	"slices"
 	"strconv"
 	"sync"
@@ -44,7 +43,7 @@ type Options struct {
 	Level slog.Leveler
 }
 
-func NewCustomeHandler(out io.Writer, opts *Options) *CustomHandler {
+func NewCustomHandler(out io.Writer, opts *Options) *CustomHandler {
 	h := &CustomHandler{out: out, mu: &sync.Mutex{}}
 	if opts != nil {
 		h.opts = *opts
@@ -55,7 +54,7 @@ func NewCustomeHandler(out io.Writer, opts *Options) *CustomHandler {
 	return h
 }
 
-// CustomHandler is a custom handler for logging records.
+// Handle is a custom handler for logging records.
 func (ch *CustomHandler) Handle(ctx context.Context, r slog.Record) error {
 	indentLevel := 0
 	bufp := allocBuf()
@@ -65,18 +64,6 @@ func (ch *CustomHandler) Handle(ctx context.Context, r slog.Record) error {
 		freeBuf(bufp)
 	}()
 	lev, colCode := colorLogLevel(r.Level.String())
-
-	if r.PC != 0 {
-		fs := runtime.CallersFrames([]uintptr{r.PC})
-		f, _ := fs.Next()
-		// Optimize to minimize allocation.
-		srcbufp := allocBuf()
-		defer freeBuf(srcbufp)
-		*srcbufp = append(*srcbufp, f.File...)
-		*srcbufp = append(*srcbufp, ':')
-		*srcbufp = strconv.AppendInt(*srcbufp, int64(f.Line), 10)
-		buf = ch.appendAttr(buf, slog.String(slog.SourceKey, string(*srcbufp)), colCode, 0)
-	}
 
 	buf = formatLoggerOutput(buf, lev, r.Message, colCode)
 
@@ -118,9 +105,20 @@ func (ch *CustomHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	chCopy.unopenedGroups = nil
 	// Pre-format the attributes.
 	for _, a := range attrs {
-		//TODO replace gray with required color val
-		chCopy.preformatted = chCopy.appendAttr(chCopy.preformatted, a, gray, chCopy.indentLevel)
+		chCopy.preformatted = chCopy.appendAttr(chCopy.preformatted, a, white, chCopy.indentLevel)
 	}
+	return &chCopy
+}
+
+func (ch *CustomHandler) WithGroup(name string) slog.Handler {
+	if name == "" {
+		return ch
+	}
+	chCopy := *ch
+	// Add an unopened group to chCopy without modifying h.
+	chCopy.unopenedGroups = make([]string, len(ch.unopenedGroups)+1)
+	copy(chCopy.unopenedGroups, ch.unopenedGroups)
+	chCopy.unopenedGroups[len(chCopy.unopenedGroups)-1] = name
 	return &chCopy
 }
 
@@ -137,16 +135,16 @@ func (ch *CustomHandler) appendAttr(buf []byte, a slog.Attr, colCode, indentLeve
 	switch a.Value.Kind() {
 	case slog.KindString:
 		// Quote string values, to make them easy to parse.
+		buf = append(buf, " "...)
 		buf = append(buf, a.Key...)
 		buf = append(buf, ": "...)
 		buf = strconv.AppendQuote(buf, a.Value.String())
-		//buf = append(buf, ' ')
 	case slog.KindTime:
 		// Write times in a standard way, without the monotonic time.
+		buf = append(buf, " "...)
 		buf = append(buf, a.Key...)
 		buf = append(buf, ": "...)
 		buf = a.Value.Time().AppendFormat(buf, time.RFC3339Nano)
-		//buf = append(buf, ' ')
 	case slog.KindGroup:
 		attrs := a.Value.Group()
 		// Ignore empty groups.
@@ -162,7 +160,6 @@ func (ch *CustomHandler) appendAttr(buf []byte, a slog.Attr, colCode, indentLeve
 		for _, ga := range attrs {
 			buf = ch.appendAttr(buf, ga, colCode, indentLevel)
 		}
-		//buf = append(buf, ' ')
 	default:
 		buf = append(buf, a.Key...)
 		buf = append(buf, ": "...)
@@ -172,18 +169,11 @@ func (ch *CustomHandler) appendAttr(buf []byte, a slog.Attr, colCode, indentLeve
 	return buf
 }
 
-func (ch *CustomHandler) WithGroup(name string) slog.Handler {
-	if name == "" {
-		return ch
-	}
-	chCopy := *ch
-	// Add an unopened group to chCopy without modifying h.
-	chCopy.unopenedGroups = make([]string, len(ch.unopenedGroups)+1)
-	copy(chCopy.unopenedGroups, ch.unopenedGroups)
-	chCopy.unopenedGroups[len(chCopy.unopenedGroups)-1] = name
-	return &chCopy
-}
-
+// formatLoggerOutput formats the logger output with timestamp, level, and message.
+// It returns the updated byte slice buffer with formatted logger output.
+// We are formatting logger output this way as we want to make sure our custom logger can print logs with /t and /n formatting.
+// If we formatt log output with slog.String ie. slog.String(slog.MessageKey, r.Message) then we will not be able to meet this requirement.
+// This is because slog.String ommits /t and /n.
 func formatLoggerOutput(buf []byte, lev, msg string, colCode int) []byte {
 	timestamp := time.Now().Format(time.RFC3339Nano)
 	buf = append(buf, "time="...)
