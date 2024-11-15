@@ -42,7 +42,13 @@ func main() {
 		go http.ListenAndServe(utils.GetEnvVar("DEBUG_SERVER_PORT", ":9090"), nil)
 	}
 
-	broker := NewBroker()
+	broker, err := NewBroker()
+	if err != nil {
+		slog.Error("Error initializing broker", "err", err)
+		os.Exit(1)
+	}
+
+	_ = broker
 
 	server := NewServer()
 	server.Run()
