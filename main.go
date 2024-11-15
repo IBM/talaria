@@ -42,6 +42,8 @@ func main() {
 		go http.ListenAndServe(utils.GetEnvVar("DEBUG_SERVER_PORT", ":9090"), nil)
 	}
 
+	broker := NewBroker()
+
 	server := NewServer()
 	server.Run()
 }
