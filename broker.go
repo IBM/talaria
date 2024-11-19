@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"net"
 	"net/url"
 	"opentalaria/utils"
@@ -14,9 +15,6 @@ var (
 	// where reserved.broker.max.id=1000 if the property is not set.
 	// KRaft mode is the default Kafka mode, since Kafka v3.3.1, so OpenTalaria will implement default settings in KRaft mode.
 	RESERVED_BROKER_MAX_ID = 1000
-
-	// regex used to validate hostname setting. Accepts hostname starting with a digit https://tools.ietf.org/html/rfc1123
-	hostnameRegexStringRFC1123 = `^([a-zA-Z0-9]{1}[a-zA-Z0-9_-]{0,62}){1}(\.[a-zA-Z0-9_]{1}[a-zA-Z0-9_-]{0,62})*?$`
 )
 
 type Broker struct {
@@ -31,6 +29,11 @@ type Broker struct {
 type Listener struct {
 	Host string
 	Port int32
+	// If the listener name is a security protocol, like PLAINTEXT,SSL,SASL_PLAINTEXT,SASL_SSL,
+	// the name will be set as SecurityProtocol. Otherwise the name should be mapped in listener.security.protocol.map.
+	// see https://docs.confluent.io/platform/current/installation/configuration/broker-configs.html#listener-security-protocol-map.
+	SecurityProtocol utils.SecurityProtocol
+	ListenerName     string
 }
 
 // NewBroker returns a new instance of Broker.
@@ -38,8 +41,8 @@ type Listener struct {
 func NewBroker() (Broker, error) {
 	broker := Broker{}
 
-	advertisedListeners := utils.GetEnvVar("advertised.listeners", "")
-	listeners := utils.GetEnvVar("listeners", "")
+	advertisedListeners := strings.ReplaceAll(utils.GetEnvVar("advertised.listeners", ""), " ", "")
+	listeners := strings.ReplaceAll(utils.GetEnvVar("listeners", ""), " ", "")
 
 	if advertisedListeners == "" {
 		advertisedListeners = listeners
@@ -55,6 +58,11 @@ func NewBroker() (Broker, error) {
 		broker.Listeners = append(broker.Listeners, listener)
 	}
 
+	err := broker.validateListeners()
+	if err != nil {
+		return Broker{}, err
+	}
+
 	advertisedListenersArr := strings.Split(advertisedListeners, ",")
 	for _, l := range advertisedListenersArr {
 		listener, err := parseListener(l)
@@ -62,7 +70,7 @@ func NewBroker() (Broker, error) {
 			return Broker{}, err
 		}
 
-		broker.AdvertisedListeners = append(broker.Listeners, listener)
+		broker.AdvertisedListeners = append(broker.AdvertisedListeners, listener)
 	}
 
 	brokerIdSetting := utils.GetEnvVar("broker.id", "-1")
@@ -88,12 +96,19 @@ func NewBroker() (Broker, error) {
 	return broker, nil
 }
 
-// TODO: implement the Kafka custom schema.
-// TODO: advertised.listeners cannot bind to 0.0.0.0, add this validation during parsing. See https://docs.confluent.io/platform/current/installation/configuration/broker-configs.html#advertised-listeners
 func parseListener(l string) (Listener, error) {
 	listener, err := url.Parse(l)
 	if err != nil {
 		return Listener{}, err
+	}
+
+	// parse the security protocol from the url scheme.
+	// If the protocol is unknown treat the scheme as broker name and check the listener.security.protocol.map
+	securityProtocol, ok := utils.ParseSecurityProtocol(listener.Scheme)
+	listenerName := listener.Scheme
+	if !ok {
+		// the url scheme
+		slog.Debug("check listener.security.protocol.map")
 	}
 
 	host, port, err := net.SplitHostPort(listener.Host)
@@ -107,7 +122,27 @@ func parseListener(l string) (Listener, error) {
 	}
 
 	return Listener{
-		Host: host,
-		Port: int32(parsedPort),
+		Host:             host,
+		Port:             int32(parsedPort),
+		SecurityProtocol: securityProtocol,
+		ListenerName:     listenerName,
 	}, nil
+}
+
+func parseBrokerName(s string) (name string, securityProtocol utils.SecurityProtocol, err error) {
+	securityProtocol, ok := utils.ParseSecurityProtocol(s)
+
+	// the listener schema is not a known security protocol, treat is as broker name
+	// and extract the security protocol from listener.security.protocol.map
+	if !ok {
+		securityProtocolMap := strings.ReplaceAll(utils.GetEnvVar("listener.security.protocol.map", ""), " ", "")
+		spMapArray := strings.Split(securityProtocolMap, ",")
+		_ = spMapArray
+	}
+
+	return
+}
+
+func (b *Broker) validateListeners() error {
+	return nil
 }
