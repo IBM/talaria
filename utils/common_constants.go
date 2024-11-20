@@ -9,11 +9,11 @@ const (
 	SSL
 	SASL_PLAINTEXT
 	SASL_SSL
-	UNDEFINED
+	UNDEFINED_SECURITY_PROTOCOL
 )
 
 // ParseSecurityProtocol parses the string p and returns the corresponding SecurityProtocol enum value and true
-// or UNDEFINED and false if the value of string p is not recognized.
+// or UNDEFINED_SECURITY_PROTOCOL and false if the value of string p is not recognized.
 func ParseSecurityProtocol(p string) (SecurityProtocol, bool) {
 	switch strings.ToUpper(p) {
 	case "PLAINTEXT":
@@ -25,6 +25,6 @@ func ParseSecurityProtocol(p string) (SecurityProtocol, bool) {
 	case "SASL_SSL":
 		return SASL_SSL, true
 	default:
-		return UNDEFINED, false
+		return UNDEFINED_SECURITY_PROTOCOL, false
 	}
 }

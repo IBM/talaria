@@ -129,18 +129,32 @@ func parseListener(l string) (Listener, error) {
 	}, nil
 }
 
-func parseBrokerName(s string) (name string, securityProtocol utils.SecurityProtocol, err error) {
+func parseBrokerName(s string) (string, utils.SecurityProtocol, error) {
 	securityProtocol, ok := utils.ParseSecurityProtocol(s)
 
-	// the listener schema is not a known security protocol, treat is as broker name
-	// and extract the security protocol from listener.security.protocol.map
-	if !ok {
-		securityProtocolMap := strings.ReplaceAll(utils.GetEnvVar("listener.security.protocol.map", ""), " ", "")
-		spMapArray := strings.Split(securityProtocolMap, ",")
-		_ = spMapArray
+	if ok {
+		return s, securityProtocol, nil
+	} else {
+		// the listener schema is not a known security protocol, treat is as broker name
+		// and extract the security protocol from listener.security.protocol.map
+		spm := strings.ReplaceAll(utils.GetEnvVar("listener.security.protocol.map", ""), " ", "")
+		spMapArray := strings.Split(spm, ",")
+
+		for _, sp := range spMapArray {
+			components := strings.Split(sp, ":")
+
+			if s == components[0] {
+				securityProtocol, ok := utils.ParseSecurityProtocol(components[1])
+				if !ok {
+					return "", utils.UNDEFINED_SECURITY_PROTOCOL, fmt.Errorf("unknown security protocol for listener %s", components[0])
+				}
+
+				return s, securityProtocol, nil
+			}
+		}
 	}
 
-	return
+	return "", utils.UNDEFINED_SECURITY_PROTOCOL, fmt.Errorf("broker %s not found in listener.security.protocol.map", s)
 }
 
 func (b *Broker) validateListeners() error {
