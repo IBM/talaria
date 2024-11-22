@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log/slog"
 	"net"
 	"net/url"
 	"opentalaria/utils"
@@ -41,15 +40,14 @@ type Listener struct {
 func NewBroker() (Broker, error) {
 	broker := Broker{}
 
-	advertisedListeners := strings.ReplaceAll(utils.GetEnvVar("advertised.listeners", ""), " ", "")
-	listeners := strings.ReplaceAll(utils.GetEnvVar("listeners", ""), " ", "")
+	advertisedListeners := strings.Split(strings.ReplaceAll(utils.GetEnvVar("advertised.listeners", ""), " ", ""), ",")
+	listeners := strings.Split(strings.ReplaceAll(utils.GetEnvVar("listeners", ""), " ", ""), ",")
 
-	if advertisedListeners == "" {
+	if len(advertisedListeners) == 0 {
 		advertisedListeners = listeners
 	}
 
-	listernersArr := strings.Split(listeners, ",")
-	for _, l := range listernersArr {
+	for _, l := range listeners {
 		listener, err := parseListener(l)
 		if err != nil {
 			return Broker{}, err
@@ -63,8 +61,7 @@ func NewBroker() (Broker, error) {
 		return Broker{}, err
 	}
 
-	advertisedListenersArr := strings.Split(advertisedListeners, ",")
-	for _, l := range advertisedListenersArr {
+	for _, l := range advertisedListeners {
 		listener, err := parseListener(l)
 		if err != nil {
 			return Broker{}, err
@@ -104,11 +101,9 @@ func parseListener(l string) (Listener, error) {
 
 	// parse the security protocol from the url scheme.
 	// If the protocol is unknown treat the scheme as broker name and check the listener.security.protocol.map
-	securityProtocol, ok := utils.ParseSecurityProtocol(listener.Scheme)
-	listenerName := listener.Scheme
-	if !ok {
-		// the url scheme
-		slog.Debug("check listener.security.protocol.map")
+	listenerName, securityProtocol, err := parseBrokerName(listener.Scheme)
+	if err != nil {
+		return Listener{}, err
 	}
 
 	host, port, err := net.SplitHostPort(listener.Host)
@@ -129,6 +124,9 @@ func parseListener(l string) (Listener, error) {
 	}, nil
 }
 
+// parseBrokerName checks if the broker name, inferred from the URL schema is a valid security protocol.
+// If not, it checks the listener.security.protocol.map for mapping for custom broker names and returns the broker name/security protocol pair.
+// If no mapping is found in the case of custom broker name, the function returns an error.
 func parseBrokerName(s string) (string, utils.SecurityProtocol, error) {
 	securityProtocol, ok := utils.ParseSecurityProtocol(s)
 
@@ -137,13 +135,12 @@ func parseBrokerName(s string) (string, utils.SecurityProtocol, error) {
 	} else {
 		// the listener schema is not a known security protocol, treat is as broker name
 		// and extract the security protocol from listener.security.protocol.map
-		spm := strings.ReplaceAll(utils.GetEnvVar("listener.security.protocol.map", ""), " ", "")
-		spMapArray := strings.Split(spm, ",")
+		spm := strings.Split(strings.ReplaceAll(utils.GetEnvVar("listener.security.protocol.map", ""), " ", ""), ",")
 
-		for _, sp := range spMapArray {
+		for _, sp := range spm {
 			components := strings.Split(sp, ":")
 
-			if s == components[0] {
+			if strings.EqualFold(s, components[0]) {
 				securityProtocol, ok := utils.ParseSecurityProtocol(components[1])
 				if !ok {
 					return "", utils.UNDEFINED_SECURITY_PROTOCOL, fmt.Errorf("unknown security protocol for listener %s", components[0])
