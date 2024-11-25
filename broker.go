@@ -47,28 +47,23 @@ func NewBroker() (Broker, error) {
 		advertisedListeners = listeners
 	}
 
-	for _, l := range listeners {
-		listener, err := parseListener(l)
-		if err != nil {
-			return Broker{}, err
-		}
-
-		broker.Listeners = append(broker.Listeners, listener)
-	}
-
-	err := broker.validateListeners()
+	listenersArray, err := parseListeners(listeners)
 	if err != nil {
 		return Broker{}, err
 	}
 
-	for _, l := range advertisedListeners {
-		listener, err := parseListener(l)
-		if err != nil {
-			return Broker{}, err
-		}
-
-		broker.AdvertisedListeners = append(broker.AdvertisedListeners, listener)
+	err = broker.validateListeners()
+	if err != nil {
+		return Broker{}, err
 	}
+
+	broker.Listeners = append(broker.Listeners, listenersArray...)
+
+	advertisedListenersArr, err := parseListeners(advertisedListeners)
+	if err != nil {
+		return Broker{}, err
+	}
+	broker.AdvertisedListeners = append(broker.AdvertisedListeners, advertisedListenersArr...)
 
 	brokerIdSetting := utils.GetEnvVar("broker.id", "-1")
 
@@ -93,6 +88,25 @@ func NewBroker() (Broker, error) {
 	return broker, nil
 }
 
+func parseListeners(listeners []string) ([]Listener, error) {
+	result := make([]Listener, len(listeners))
+
+	for _, l := range listeners {
+		if l == "" {
+			continue
+		}
+
+		listener, err := parseListener(l)
+		if err != nil {
+			return []Listener{}, err
+		}
+
+		result = append(result, listener)
+	}
+
+	return result, nil
+}
+
 func parseListener(l string) (Listener, error) {
 	listener, err := url.Parse(l)
 	if err != nil {
@@ -101,7 +115,7 @@ func parseListener(l string) (Listener, error) {
 
 	// parse the security protocol from the url scheme.
 	// If the protocol is unknown treat the scheme as broker name and check the listener.security.protocol.map
-	listenerName, securityProtocol, err := parseBrokerName(listener.Scheme)
+	listenerName, securityProtocol, err := getBrokerNameComponents(listener.Scheme)
 	if err != nil {
 		return Listener{}, err
 	}
@@ -124,10 +138,10 @@ func parseListener(l string) (Listener, error) {
 	}, nil
 }
 
-// parseBrokerName checks if the broker name, inferred from the URL schema is a valid security protocol.
+// getBrokerNameComponents checks if the broker name, inferred from the URL schema is a valid security protocol.
 // If not, it checks the listener.security.protocol.map for mapping for custom broker names and returns the broker name/security protocol pair.
 // If no mapping is found in the case of custom broker name, the function returns an error.
-func parseBrokerName(s string) (string, utils.SecurityProtocol, error) {
+func getBrokerNameComponents(s string) (string, utils.SecurityProtocol, error) {
 	securityProtocol, ok := utils.ParseSecurityProtocol(s)
 
 	if ok {
@@ -155,5 +169,20 @@ func parseBrokerName(s string) (string, utils.SecurityProtocol, error) {
 }
 
 func (b *Broker) validateListeners() error {
+	// checkNamePortPair := make([]map[string]string, len(b.Listeners))
+	// for _, listener := range b.Listeners {
+	// 	npPair := fmt.Sprintf("%s:%d", listener.ListenerName, listener.Port)
+	// 	if slices.Contains(checkNamePortPair, npPair) {
+	// 		// broker name and port pairs have to be unique. The exception is if the host for two entries is
+	// 		// IPv4 and IPv6 respectively. https://kafka.apache.org/documentation/#brokerconfigs_listeners
+	// 		addr, err := netip.ParseAddr(listener.Host)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+
+	// 	}
+
+	// 	checkNamePortPair = append(checkNamePortPair, npPair)
+	// }
 	return nil
 }

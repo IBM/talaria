@@ -6,31 +6,107 @@ import (
 	"testing"
 )
 
-func Test_parseBrokerName(t *testing.T) {
+func Test_parseListener(t *testing.T) {
 	type args struct {
-		s string
+		l           string
+		securityMap string
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    string
-		want1   utils.SecurityProtocol
+		want    Listener
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "listener with ssl schema and empty host",
+			args: args{
+				l:           "SSL://:9092",
+				securityMap: "",
+			},
+			want: Listener{
+				Host:             "",
+				Port:             9092,
+				SecurityProtocol: utils.SSL,
+				ListenerName:     "ssl",
+			},
+			wantErr: false,
+		},
+		{
+			name: "listener with plaintext schema and localhost",
+			args: args{
+				l:           "PLAINTEXT://localhost:9092",
+				securityMap: "",
+			},
+			want: Listener{
+				Host:             "localhost",
+				Port:             9092,
+				SecurityProtocol: utils.PLAINTEXT,
+				ListenerName:     "plaintext",
+			},
+			wantErr: false,
+		},
+		{
+			name: "custom listener name",
+			args: args{
+				l:           "CUSTOM://localhost:9092",
+				securityMap: "CUSTOM:PLAINTEXT",
+			},
+			want: Listener{
+				Host:             "localhost",
+				Port:             9092,
+				SecurityProtocol: utils.PLAINTEXT,
+				ListenerName:     "custom",
+			},
+			wantErr: false,
+		},
+		{
+			name: "custom listener name not in security map",
+			args: args{
+				l:           "CUSTOM://localhost:9092",
+				securityMap: "",
+			},
+			want:    Listener{},
+			wantErr: true,
+		},
+		{
+			name: "incorrect security protocol in security map",
+			args: args{
+				l:           "CUSTOM://localhost:9092",
+				securityMap: "CUSTOM:CUSTOM",
+			},
+			want:    Listener{},
+			wantErr: true,
+		},
+		{
+			name: "empty port",
+			args: args{
+				l:           "CUSTOM://localhost",
+				securityMap: "",
+			},
+			want:    Listener{},
+			wantErr: true,
+		},
+		{
+			name: "invalid port",
+			args: args{
+				l:           "CUSTOM://localhost:aaaa",
+				securityMap: "",
+			},
+			want:    Listener{},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1, err := parseBrokerName(tt.args.s)
+			t.Setenv("listener.security.protocol.map", tt.args.securityMap)
+
+			got, err := parseListener(tt.args.l)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("parseBrokerName() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("parseListener() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
-				t.Errorf("parseBrokerName() got = %v, want %v", got, tt.want)
-			}
-			if !reflect.DeepEqual(got1, tt.want1) {
-				t.Errorf("parseBrokerName() got1 = %v, want %v", got1, tt.want1)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("parseListener() = %v, want %v", got, tt.want)
 			}
 		})
 	}
