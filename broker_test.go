@@ -111,3 +111,124 @@ func Test_parseListener(t *testing.T) {
 		})
 	}
 }
+
+func TestBroker_validateListeners(t *testing.T) {
+	type fields struct {
+		BrokerID            int32
+		Rack                *string
+		Listeners           []Listener
+		AdvertisedListeners []Listener
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "One listener",
+			fields: fields{
+				BrokerID: 0,
+				Listeners: []Listener{
+					{
+						ListenerName:     "client",
+						Host:             "",
+						Port:             1234,
+						SecurityProtocol: utils.PLAINTEXT,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Two listeners, different ports",
+			fields: fields{
+				BrokerID: 0,
+				Listeners: []Listener{
+					{
+						ListenerName:     "client",
+						Host:             "",
+						Port:             5432,
+						SecurityProtocol: utils.SSL,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Two listeners, same ports",
+			fields: fields{
+				BrokerID: 0,
+				Listeners: []Listener{
+					{
+						ListenerName:     "client",
+						Host:             "",
+						Port:             5432,
+						SecurityProtocol: utils.SSL,
+					},
+					{
+						ListenerName:     "broker",
+						Host:             "",
+						Port:             5432,
+						SecurityProtocol: utils.SSL,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Two listeners, same ports, same name",
+			fields: fields{
+				BrokerID: 0,
+				Listeners: []Listener{
+					{
+						ListenerName:     "client",
+						Host:             "",
+						Port:             5432,
+						SecurityProtocol: utils.PLAINTEXT,
+					},
+					{
+						ListenerName:     "client",
+						Host:             "",
+						Port:             5432,
+						SecurityProtocol: utils.SSL,
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Two listeners, same ports, same name, ipv4 and ipv6",
+			fields: fields{
+				BrokerID: 0,
+				Listeners: []Listener{
+					{
+						ListenerName:     "client",
+						Host:             "127.0.0.1",
+						Port:             5432,
+						SecurityProtocol: utils.PLAINTEXT,
+					},
+					{
+						ListenerName:     "client",
+						Host:             "::FFFF:C0A8:1",
+						Port:             5432,
+						SecurityProtocol: utils.SSL,
+					},
+				},
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := &Broker{
+				BrokerID:            tt.fields.BrokerID,
+				Rack:                tt.fields.Rack,
+				Listeners:           tt.fields.Listeners,
+				AdvertisedListeners: tt.fields.AdvertisedListeners,
+			}
+			if err := b.validateListeners(); (err != nil) != tt.wantErr {
+				t.Errorf("Broker.validateListeners() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
