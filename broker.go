@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"net/netip"
 	"net/url"
 	"opentalaria/utils"
 	"strconv"
@@ -52,12 +53,12 @@ func NewBroker() (Broker, error) {
 		return Broker{}, err
 	}
 
+	broker.Listeners = append(broker.Listeners, listenersArray...)
+
 	err = broker.validateListeners()
 	if err != nil {
 		return Broker{}, err
 	}
-
-	broker.Listeners = append(broker.Listeners, listenersArray...)
 
 	advertisedListenersArr, err := parseListeners(advertisedListeners)
 	if err != nil {
@@ -89,7 +90,7 @@ func NewBroker() (Broker, error) {
 }
 
 func parseListeners(listeners []string) ([]Listener, error) {
-	result := make([]Listener, len(listeners))
+	result := []Listener{}
 
 	for _, l := range listeners {
 		if l == "" {
@@ -168,21 +169,27 @@ func getBrokerNameComponents(s string) (string, utils.SecurityProtocol, error) {
 	return "", utils.UNDEFINED_SECURITY_PROTOCOL, fmt.Errorf("broker %s not found in listener.security.protocol.map", s)
 }
 
+// validateListeners performs common checks on the listeners as per Kafka specification https://kafka.apache.org/documentation/#brokerconfigs_listeners.
+// Broker name and port pairs have to be unique. The exception is if the host for two entries is IPv4 and IPv6 respectively.
 func (b *Broker) validateListeners() error {
-	// checkNamePortPair := make([]map[string]string, len(b.Listeners))
-	// for _, listener := range b.Listeners {
-	// 	npPair := fmt.Sprintf("%s:%d", listener.ListenerName, listener.Port)
-	// 	if slices.Contains(checkNamePortPair, npPair) {
-	// 		// broker name and port pairs have to be unique. The exception is if the host for two entries is
-	// 		// IPv4 and IPv6 respectively. https://kafka.apache.org/documentation/#brokerconfigs_listeners
-	// 		addr, err := netip.ParseAddr(listener.Host)
-	// 		if err != nil {
-	// 			return err
-	// 		}
+	checkNamePortPair := make([]map[string]string, 0)
+	for _, listener := range b.Listeners {
+		npPair := fmt.Sprintf("%s:%d", listener.ListenerName, listener.Port)
+		for _, npp := range checkNamePortPair {
+			if host, ok := npp[npPair]; ok {
+				// the broker name/port pair is duplicated. Check if one is IPv4 and the other IPv6, otherwise return an error.
+				addr1, _ := netip.ParseAddr(host) // ignore errors from ParseAddr, which will be thrown if a hostname is provided, we care only about IP addresses.
+				existingAddrIPVer := addr1.Is4()
 
-	// 	}
+				addr2, _ := netip.ParseAddr(listener.Host)
+				newAddrIPVer := addr2.Is4()
 
-	// 	checkNamePortPair = append(checkNamePortPair, npPair)
-	// }
+				if existingAddrIPVer == newAddrIPVer {
+					return fmt.Errorf("listener name and port are not unique for listener %s", listener.ListenerName)
+				}
+			}
+		}
+		checkNamePortPair = append(checkNamePortPair, map[string]string{npPair: listener.Host})
+	}
 	return nil
 }
