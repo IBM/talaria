@@ -197,6 +197,27 @@ func TestBroker_validateListeners(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "Two listeners, different ports, same name",
+			fields: fields{
+				BrokerID: 0,
+				Listeners: []Listener{
+					{
+						ListenerName:     "client",
+						Host:             "",
+						Port:             5432,
+						SecurityProtocol: utils.PLAINTEXT,
+					},
+					{
+						ListenerName:     "client",
+						Host:             "",
+						Port:             1234,
+						SecurityProtocol: utils.SSL,
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
 			name: "Two listeners, same ports, same name, ipv4 and ipv6",
 			fields: fields{
 				BrokerID: 0,
@@ -228,6 +249,115 @@ func TestBroker_validateListeners(t *testing.T) {
 			}
 			if err := b.validateListeners(); (err != nil) != tt.wantErr {
 				t.Errorf("Broker.validateListeners() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestBroker_validateAdvertisedListeners(t *testing.T) {
+	type fields struct {
+		BrokerID            int32
+		Rack                *string
+		Listeners           []Listener
+		AdvertisedListeners []Listener
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{
+			name: "One listener",
+			fields: fields{
+				BrokerID: 0,
+				AdvertisedListeners: []Listener{
+					{
+						ListenerName:     "client",
+						Host:             "127.0.0.1",
+						Port:             1234,
+						SecurityProtocol: utils.PLAINTEXT,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "One listener with hostname",
+			fields: fields{
+				BrokerID: 0,
+				AdvertisedListeners: []Listener{
+					{
+						ListenerName:     "client",
+						Host:             "example.com",
+						Port:             1234,
+						SecurityProtocol: utils.PLAINTEXT,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Two listeners with hostname",
+			fields: fields{
+				BrokerID: 0,
+				AdvertisedListeners: []Listener{
+					{
+						ListenerName:     "client",
+						Host:             "example.com",
+						Port:             1234,
+						SecurityProtocol: utils.PLAINTEXT,
+					},
+					{
+						ListenerName:     "broker",
+						Host:             "example.com",
+						Port:             1234,
+						SecurityProtocol: utils.PLAINTEXT,
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Invalid binding, 0.0.0.0",
+			fields: fields{
+				BrokerID: 0,
+				AdvertisedListeners: []Listener{
+					{
+						ListenerName:     "client",
+						Host:             "0.0.0.0",
+						Port:             1234,
+						SecurityProtocol: utils.PLAINTEXT,
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "Invalid binding, empty host",
+			fields: fields{
+				BrokerID: 0,
+				AdvertisedListeners: []Listener{
+					{
+						ListenerName:     "client",
+						Host:             "",
+						Port:             1234,
+						SecurityProtocol: utils.PLAINTEXT,
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := &Broker{
+				BrokerID:            tt.fields.BrokerID,
+				Rack:                tt.fields.Rack,
+				Listeners:           tt.fields.Listeners,
+				AdvertisedListeners: tt.fields.AdvertisedListeners,
+			}
+			if err := b.validateAdvertisedListeners(); (err != nil) != tt.wantErr {
+				t.Errorf("Broker.validateAdvertisedListeners() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
