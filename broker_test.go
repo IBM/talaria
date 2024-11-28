@@ -173,7 +173,7 @@ func TestBroker_validateListeners(t *testing.T) {
 					},
 				},
 			},
-			wantErr: false,
+			wantErr: true,
 		},
 		{
 			name: "Two listeners, same ports, same name",
