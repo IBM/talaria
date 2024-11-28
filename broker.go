@@ -52,7 +52,6 @@ func NewBroker() (Broker, error) {
 	if err != nil {
 		return Broker{}, err
 	}
-
 	broker.Listeners = append(broker.Listeners, listenersArray...)
 
 	err = broker.validateListeners()
@@ -65,6 +64,11 @@ func NewBroker() (Broker, error) {
 		return Broker{}, err
 	}
 	broker.AdvertisedListeners = append(broker.AdvertisedListeners, advertisedListenersArr...)
+
+	err = broker.validateAdvertisedListeners()
+	if err != nil {
+		return Broker{}, err
+	}
 
 	brokerIdSetting := utils.GetEnvVar("broker.id", "-1")
 
@@ -170,26 +174,52 @@ func getBrokerNameComponents(s string) (string, utils.SecurityProtocol, error) {
 }
 
 // validateListeners performs common checks on the listeners as per Kafka specification https://kafka.apache.org/documentation/#brokerconfigs_listeners.
-// Broker name and port pairs have to be unique. The exception is if the host for two entries is IPv4 and IPv6 respectively.
+// Broker name and port have to be unique. The exception is if the host for two entries is IPv4 and IPv6 respectively.
 func (b *Broker) validateListeners() error {
-	checkNamePortPair := make([]map[string]string, 0)
+	ports := map[int32]string{}
+	listenerNames := map[string]string{}
+
 	for _, listener := range b.Listeners {
-		npPair := fmt.Sprintf("%s:%d", listener.ListenerName, listener.Port)
-		for _, npp := range checkNamePortPair {
-			if host, ok := npp[npPair]; ok {
-				// the broker name/port pair is duplicated. Check if one is IPv4 and the other IPv6, otherwise return an error.
-				addr1, _ := netip.ParseAddr(host) // ignore errors from ParseAddr, which will be thrown if a hostname is provided, we care only about IP addresses.
-				existingAddrIPVer := addr1.Is4()
-
-				addr2, _ := netip.ParseAddr(listener.Host)
-				newAddrIPVer := addr2.Is4()
-
-				if existingAddrIPVer == newAddrIPVer {
-					return fmt.Errorf("listener name and port are not unique for listener %s", listener.ListenerName)
-				}
+		// Check uniqueness for ports
+		if val, ok := ports[listener.Port]; ok {
+			if areIpProtocolsSame(listener.Host, val) {
+				return fmt.Errorf("listener port is not unique for listener %s", listener.ListenerName)
 			}
 		}
-		checkNamePortPair = append(checkNamePortPair, map[string]string{npPair: listener.Host})
+
+		// Check uniqueness for broker names
+		if val, ok := listenerNames[listener.ListenerName]; ok {
+			if areIpProtocolsSame(listener.Host, val) {
+				return fmt.Errorf("listener name is not unique for listener %s", listener.ListenerName)
+			}
+		}
+
+		ports[listener.Port] = listener.Host
+		listenerNames[listener.ListenerName] = listener.Host
 	}
+
+	return nil
+}
+
+func areIpProtocolsSame(host1, host2 string) bool {
+	// ignore errors from ParseAddr, which will be thrown if a hostname is provided, we care only about IP addresses.
+	addr1, _ := netip.ParseAddr(host1)
+	existingAddrIPVer := addr1.Is4()
+
+	addr2, _ := netip.ParseAddr(host2)
+	newAddrIPVer := addr2.Is4()
+
+	return existingAddrIPVer == newAddrIPVer
+}
+
+// validateAdvertisedListeners performs common checks on the advertised listers as per Kafka specification https://kafka.apache.org/documentation/#brokerconfigs_advertised.listeners.
+// Unlike with listeners, having duplicated ports is allowed. The only constraint is advertising to 0.0.0.0 is not allowed.
+func (b *Broker) validateAdvertisedListeners() error {
+	for _, listener := range b.AdvertisedListeners {
+		if strings.EqualFold(listener.Host, "0.0.0.0") || listener.Host == "" {
+			return fmt.Errorf("advertising listener on 0.0.0.0 address is not allowed for listener %s", listener.ListenerName)
+		}
+	}
+
 	return nil
 }
