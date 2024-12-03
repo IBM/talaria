@@ -48,8 +48,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	_ = broker
+	if len(broker.Listeners) > 1 {
+		slog.Error("OpenTalaria does not support more than one listener for now. See https://github.com/IBM/opentalaria/issues/18")
+		os.Exit(1)
+	}
 
-	server := NewServer()
+	server := NewServer(broker)
 	server.Run()
 }
