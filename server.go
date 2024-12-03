@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -8,7 +9,10 @@ import (
 	"net"
 	"opentalaria/api"
 	"opentalaria/protocol"
+	"opentalaria/utils"
 	"strconv"
+
+	"golang.org/x/sync/semaphore"
 )
 
 type Server struct {
@@ -47,6 +51,17 @@ func (server *Server) Run() {
 	defer listener.Close()
 
 	slog.Info(fmt.Sprintf("tcp server listening on %s:%s", server.host, server.port))
+	conPoolStr := utils.GetEnvVar("CONNECTION_POOL", "1")
+	conCapacity, err := strconv.Atoi(conPoolStr)
+	if err != nil {
+		slog.Error("error creating connection", "error", err)
+		return
+	}
+	slog.Info("CONNECTION_POOL set to ", "CONNECTION_POOL", conCapacity)
+
+	//semaphore package mimics a typical “worker pool” pattern,
+	//but without the need to explicitly shut down idle workers when the work is done
+	sem := semaphore.NewWeighted(int64(conCapacity))
 
 	for {
 		conn, err := listener.Accept()
@@ -58,7 +73,19 @@ func (server *Server) Run() {
 			conn: conn,
 		}
 
-		go client.handleRequest()
+		// TODO move ctx from here
+		ctx := context.TODO()
+		if err := sem.Acquire(ctx, 1); err != nil {
+			slog.Error("Failed to acquire semaphore: %v", err)
+			break
+		}
+
+		go func() {
+			defer sem.Release(1)
+			client.handleRequest()
+		}()
+
+		//go client.handleRequest()
 	}
 }
 
