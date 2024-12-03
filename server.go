@@ -8,7 +8,7 @@ import (
 	"net"
 	"opentalaria/api"
 	"opentalaria/protocol"
-	"opentalaria/utils"
+	"strconv"
 )
 
 type Server struct {
@@ -20,10 +20,21 @@ type Client struct {
 	conn net.Conn
 }
 
-func NewServer() *Server {
+func NewServer(broker Broker) *Server {
+	var host, port string
+	if len(broker.Listeners) > 0 {
+		listener := broker.Listeners[0]
+		host = listener.Host
+		port = strconv.Itoa(int(listener.Port))
+	} else {
+		// if no listener is set, bind to PLAINTEXT://0.0.0.0:9092 by default.
+		host = "0.0.0.0"
+		port = "9092"
+	}
+
 	return &Server{
-		host: utils.GetEnvVar("BROKER_HOST", "0.0.0.0"),
-		port: utils.GetEnvVar("BROKER_PORT", "9092"),
+		host: host,
+		port: port,
 	}
 }
 
