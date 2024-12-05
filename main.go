@@ -39,7 +39,8 @@ func main() {
 	if utils.GetProfile() == utils.Localdev {
 		slog.Info("starting in local dev mode ...")
 		// start a web server if we are in local dev mode
-		go http.ListenAndServe(utils.GetEnvVar("DEBUG_SERVER_PORT", ":9090"), nil)
+		port, _ := utils.GetEnvVar("DEBUG_SERVER_PORT", ":9090")
+		go http.ListenAndServe(port, nil)
 	}
 
 	server := NewServer()

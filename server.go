@@ -1,14 +1,20 @@
 package main
 
 import (
+	"context"
 	"encoding/binary"
 	"fmt"
 	"io"
 	"log/slog"
+	"math"
 	"net"
 	"opentalaria/api"
 	"opentalaria/protocol"
 	"opentalaria/utils"
+	"runtime"
+	"strconv"
+
+	"golang.org/x/sync/semaphore"
 )
 
 type Server struct {
@@ -21,13 +27,18 @@ type Client struct {
 }
 
 func NewServer() *Server {
+	var host, port string
+	host, _ = utils.GetEnvVar("BROKER_HOST", "0.0.0.0")
+	port, _ = utils.GetEnvVar("BROKER_PORT", "9092")
 	return &Server{
-		host: utils.GetEnvVar("BROKER_HOST", "0.0.0.0"),
-		port: utils.GetEnvVar("BROKER_PORT", "9092"),
+		host: host,
+		port: port,
 	}
 }
 
 func (server *Server) Run() {
+	ctx := context.TODO()
+
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%s", server.host, server.port))
 	if err != nil {
 		slog.Error("error creating tcp listener", "err", err)
@@ -36,6 +47,39 @@ func (server *Server) Run() {
 	defer listener.Close()
 
 	slog.Info(fmt.Sprintf("tcp server listening on %s:%s", server.host, server.port))
+
+	cpu, _ := utils.GetEnvVar("GOMAXPROCS", "0")
+	numberOfCpu, err := strconv.Atoi(cpu)
+	if err != nil {
+		slog.Error("error creating connection", "error", err)
+		return
+	}
+	//Adding more CPU's only helps up to number of available Go routines
+	//For example GOMAXPROCS(8) and semaphore.NewWeighted(8) means each Go routine will be executed on different CPU
+	//However if we set GOMAXPROCS(4) and semaphore.NewWeighted(8) we will have only 4 CPU's to handle 8 Go routines
+	runtime.GOMAXPROCS(numberOfCpu)
+	slog.Debug("number of available CPU's ", "GOMAXPROCS", numberOfCpu)
+
+	var conCapacity int64
+	conPoolStr, ok := utils.GetEnvVar("max.connections", "")
+	if !ok {
+		//If env variable max.connections was not set we use default val of MaxInt64
+		conCapacity = math.MaxInt64
+	} else {
+		//If env variable is set, we need to convert it to int64
+		c, err := strconv.ParseInt(conPoolStr, 10, 64)
+		if err != nil {
+			slog.Error("error setting max.connections", "error", err)
+			return
+		}
+		conCapacity = c
+	}
+
+	slog.Debug("max.connections set to ", "max.connections", conCapacity)
+
+	//semaphore package mimics a typical “worker pool” pattern,
+	//but without the need to explicitly shut down idle workers when the work is done
+	sem := semaphore.NewWeighted(int64(conCapacity))
 
 	for {
 		conn, err := listener.Accept()
@@ -47,7 +91,18 @@ func (server *Server) Run() {
 			conn: conn,
 		}
 
-		go client.handleRequest()
+		if err := sem.Acquire(ctx, 1); err != nil {
+			slog.Error("Failed to acquire semaphore: %v", "err", err)
+			break
+		}
+		go func() {
+			defer sem.Release(1)
+			client.handleRequest()
+		}()
+	}
+	// Acquire all of the tokens to wait for any remaining workers to finish
+	if err := sem.Acquire(ctx, int64(conCapacity)); err != nil {
+		slog.Error("Failed to acquire semaphore: %v", "err", err)
 	}
 }
 
