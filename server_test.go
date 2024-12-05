@@ -22,8 +22,8 @@ func (mc *MockClient) handleRequest() {
 }
 
 func TestServer_Run(t *testing.T) {
-	os.Setenv("CONNECTION_POOL", "10")
-	defer os.Unsetenv("CONNECTION_POOL")
+	os.Setenv("MAX_CONNECTIONS", "20")
+	defer os.Unsetenv("MAX_CONNECTIONS")
 
 	os.Setenv("BROKER_HOST", "0.0.0.0")
 	defer os.Unsetenv("BROKER_HOST")
@@ -59,7 +59,6 @@ func TestServer_Run(t *testing.T) {
 
 	for i := 0; i < 100; i++ {
 		go func(i int) {
-
 			conn.Write([]byte("Hello Server!"))
 			mockClient.handleRequest()
 
