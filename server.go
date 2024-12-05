@@ -10,6 +10,7 @@ import (
 	"opentalaria/api"
 	"opentalaria/protocol"
 	"opentalaria/utils"
+	"runtime"
 	"strconv"
 
 	"golang.org/x/sync/semaphore"
@@ -40,18 +41,24 @@ func (server *Server) Run() {
 	defer listener.Close()
 
 	slog.Info(fmt.Sprintf("tcp server listening on %s:%s", server.host, server.port))
-	conPoolStr := utils.GetEnvVar("CONNECTION_POOL", "1")
+	conPoolStr := utils.GetEnvVar("CONNECTION_POOL", "10")
 	conCapacity, err := strconv.Atoi(conPoolStr)
 	if err != nil {
 		slog.Error("error creating connection", "error", err)
 		return
 	}
 	slog.Info("CONNECTION_POOL set to ", "CONNECTION_POOL", conCapacity)
+	//TODO GOMAXPROCS should be configurable
+	//Adding more CPU's only help up to number of available Go routines
+	//For example GOMAXPROCS(8) and semaphore.NewWeighted(8) means each Go routine will be executed on different CPU
+	//However if we set GOMAXPROCS(4) and semaphore.NewWeighted(8) we will have only 4 CPU's to handle 8 Go routines
+	runtime.GOMAXPROCS(8)
 
 	//semaphore package mimics a typical “worker pool” pattern,
 	//but without the need to explicitly shut down idle workers when the work is done
 	sem := semaphore.NewWeighted(int64(conCapacity))
-
+	// TODO move ctx from here
+	ctx := context.TODO()
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -62,19 +69,19 @@ func (server *Server) Run() {
 			conn: conn,
 		}
 
-		// TODO move ctx from here
-		ctx := context.TODO()
 		if err := sem.Acquire(ctx, 1); err != nil {
-			slog.Error("Failed to acquire semaphore: %v", err)
+			slog.Error("Failed to acquire semaphore: %v", "err", err)
 			break
 		}
-
 		go func() {
 			defer sem.Release(1)
 			client.handleRequest()
 		}()
-
-		//go client.handleRequest()
+	}
+	//TODO review if finall Acquire is needed?
+	// Acquire all of the tokens to wait for any remaining workers to finish
+	if err := sem.Acquire(ctx, int64(conCapacity)); err != nil {
+		slog.Error("Failed to acquire semaphore: %v", "err", err)
 	}
 }
 
