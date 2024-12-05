@@ -56,11 +56,12 @@ func GetLogLevel() slog.Level {
 // Returns:
 //
 // string: The value of the environment variable or the default value if it is not set.
-func GetEnvVar(lookUpVar, defaultVal string) string {
+// bool: True if the value was set.
+func GetEnvVar(lookUpVar, defaultVal string) (string, bool) {
 	val, ok := os.LookupEnv(lookUpVar)
 	if !ok {
-		return defaultVal
+		return defaultVal, false
 	} else {
-		return val
+		return val, true
 	}
 }

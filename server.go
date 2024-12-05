@@ -11,7 +11,6 @@ import (
 	"opentalaria/api"
 	"opentalaria/protocol"
 	"opentalaria/utils"
-	"os"
 	"runtime"
 	"strconv"
 
@@ -28,14 +27,18 @@ type Client struct {
 }
 
 func NewServer() *Server {
+	var host, port string
+	host, _ = utils.GetEnvVar("BROKER_HOST", "0.0.0.0")
+	port, _ = utils.GetEnvVar("BROKER_PORT", "9092")
 	return &Server{
-		host: utils.GetEnvVar("BROKER_HOST", "0.0.0.0"),
-		port: utils.GetEnvVar("BROKER_PORT", "9092"),
+		host: host,
+		port: port,
 	}
 }
 
 func (server *Server) Run() {
 	ctx := context.TODO()
+
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%s", server.host, server.port))
 	if err != nil {
 		slog.Error("error creating tcp listener", "err", err)
@@ -45,7 +48,7 @@ func (server *Server) Run() {
 
 	slog.Info(fmt.Sprintf("tcp server listening on %s:%s", server.host, server.port))
 
-	cpu := utils.GetEnvVar("GOMAXPROCS", "0")
+	cpu, _ := utils.GetEnvVar("GOMAXPROCS", "0")
 	numberOfCpu, err := strconv.Atoi(cpu)
 	if err != nil {
 		slog.Error("error creating connection", "error", err)
@@ -58,9 +61,9 @@ func (server *Server) Run() {
 	slog.Debug("number of available CPU's ", "GOMAXPROCS", numberOfCpu)
 
 	var conCapacity int64
-	conPoolStr, ok := os.LookupEnv("max.connections")
-	//If env variable is not set we use default val of MaxInt64
+	conPoolStr, ok := utils.GetEnvVar("max.connections", "")
 	if !ok {
+		//If env variable max.connections was not set we use default val of MaxInt64
 		conCapacity = math.MaxInt64
 	} else {
 		//If env variable is set, we need to convert it to int64
