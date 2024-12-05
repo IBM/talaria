@@ -23,6 +23,7 @@ type Server struct {
 
 type Client struct {
 	conn net.Conn
+	ctx  context.Context
 }
 
 func NewServer(broker Broker) *Server {
@@ -44,6 +45,7 @@ func NewServer(broker Broker) *Server {
 }
 
 func (server *Server) Run() {
+	ctx := context.TODO()
 	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%s", server.host, server.port))
 	if err != nil {
 		slog.Error("error creating tcp listener", "err", err)
@@ -52,24 +54,29 @@ func (server *Server) Run() {
 	defer listener.Close()
 
 	slog.Info(fmt.Sprintf("tcp server listening on %s:%s", server.host, server.port))
-	conPoolStr := utils.GetEnvVar("CONNECTION_POOL", "10")
+	conPoolStr := utils.GetEnvVar("MAX_CONNECTIONS", "10")
 	conCapacity, err := strconv.Atoi(conPoolStr)
 	if err != nil {
 		slog.Error("error creating connection", "error", err)
 		return
 	}
-	slog.Info("CONNECTION_POOL set to ", "CONNECTION_POOL", conCapacity)
-	//TODO GOMAXPROCS should be configurable
+	slog.Debug("MAX_CONNECTIONS set to ", "MAX_CONNECTIONS", conCapacity)
+
 	//Adding more CPU's only help up to number of available Go routines
 	//For example GOMAXPROCS(8) and semaphore.NewWeighted(8) means each Go routine will be executed on different CPU
 	//However if we set GOMAXPROCS(4) and semaphore.NewWeighted(8) we will have only 4 CPU's to handle 8 Go routines
-	runtime.GOMAXPROCS(8)
+	cpu := utils.GetEnvVar("GOMAXPROCS", "0")
+	numberOfCpu, err := strconv.Atoi(cpu)
+	if err != nil {
+		slog.Error("error creating connection", "error", err)
+		return
+	}
+	runtime.GOMAXPROCS(numberOfCpu)
+	slog.Debug("number of available CPU's ", "GOMAXPROCS", numberOfCpu)
 
 	//semaphore package mimics a typical “worker pool” pattern,
 	//but without the need to explicitly shut down idle workers when the work is done
 	sem := semaphore.NewWeighted(int64(conCapacity))
-	// TODO move ctx from here
-	ctx := context.TODO()
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -78,9 +85,10 @@ func (server *Server) Run() {
 
 		client := &Client{
 			conn: conn,
+			ctx:  ctx,
 		}
 
-		if err := sem.Acquire(ctx, 1); err != nil {
+		if err := sem.Acquire(client.ctx, 1); err != nil {
 			slog.Error("Failed to acquire semaphore: %v", "err", err)
 			break
 		}
@@ -89,7 +97,6 @@ func (server *Server) Run() {
 			client.handleRequest()
 		}()
 	}
-	//TODO review if finall Acquire is needed?
 	// Acquire all of the tokens to wait for any remaining workers to finish
 	if err := sem.Acquire(ctx, int64(conCapacity)); err != nil {
 		slog.Error("Failed to acquire semaphore: %v", "err", err)
