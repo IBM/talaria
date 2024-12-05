@@ -62,7 +62,7 @@ func (server *Server) Run() {
 		slog.Error("error creating connection", "error", err)
 		return
 	}
-	//Adding more CPU's only help up to number of available Go routines
+	//Adding more CPU's only helps up to number of available Go routines
 	//For example GOMAXPROCS(8) and semaphore.NewWeighted(8) means each Go routine will be executed on different CPU
 	//However if we set GOMAXPROCS(4) and semaphore.NewWeighted(8) we will have only 4 CPU's to handle 8 Go routines
 	runtime.GOMAXPROCS(numberOfCpu)
