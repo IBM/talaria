@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/netip"
@@ -41,8 +42,14 @@ type Listener struct {
 func NewBroker() (Broker, error) {
 	broker := Broker{}
 
-	advertisedListeners := strings.Split(strings.ReplaceAll(utils.GetEnvVar("advertised.listeners", ""), " ", ""), ",")
-	listeners := strings.Split(strings.ReplaceAll(utils.GetEnvVar("listeners", ""), " ", ""), ",")
+	advListenerStr, _ := utils.GetEnvVar("advertised.listeners", "")
+	advertisedListeners := strings.Split(strings.ReplaceAll(advListenerStr, " ", ""), ",")
+
+	listenerStr, ok := utils.GetEnvVar("listeners", "")
+	if !ok {
+		return Broker{}, errors.New("no listeners set")
+	}
+	listeners := strings.Split(strings.ReplaceAll(listenerStr, " ", ""), ",")
 
 	if len(advertisedListeners) == 0 {
 		advertisedListeners = listeners
@@ -70,7 +77,7 @@ func NewBroker() (Broker, error) {
 		return Broker{}, err
 	}
 
-	brokerIdSetting := utils.GetEnvVar("broker.id", "-1")
+	brokerIdSetting, _ := utils.GetEnvVar("broker.id", "-1")
 
 	brokerId, err := strconv.Atoi(brokerIdSetting)
 	if err != nil {
@@ -154,7 +161,8 @@ func getBrokerNameComponents(s string) (string, utils.SecurityProtocol, error) {
 	} else {
 		// the listener schema is not a known security protocol, treat is as broker name
 		// and extract the security protocol from listener.security.protocol.map
-		spm := strings.Split(strings.ReplaceAll(utils.GetEnvVar("listener.security.protocol.map", ""), " ", ""), ",")
+		listenerSpmStr, _ := utils.GetEnvVar("listener.security.protocol.map", "")
+		spm := strings.Split(strings.ReplaceAll(listenerSpmStr, " ", ""), ",")
 
 		for _, sp := range spm {
 			components := strings.Split(sp, ":")
