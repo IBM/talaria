@@ -24,3 +24,5 @@ commit message:
 ```
 $ git commit -s -m 'This is my commit message'
 ```
+
+*Note* if you want to automatically sign-off all commits, follow the steps in [this](https://stackoverflow.com/a/46536244) StackOverflow answer.
