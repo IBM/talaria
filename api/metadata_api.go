@@ -42,12 +42,12 @@ func GenerateMetadataResponse(version int16) *protocol.MetadataResponse {
 	response.Version = version
 	// TODO: handle throttle time
 	response.ThrottleTimeMs = 0
-	rack := "ffaabb"
+
 	response.Brokers = append(response.Brokers, protocol.MetadataResponseBroker{
 		NodeID: 1,
 		Host:   "localhost",
 		Port:   9092,
-		Rack:   &rack,
+		Rack:   nil, // for now OpenTalaria does not support rack awareness.
 	})
 
 	clusterId := "aaabbbfff"
