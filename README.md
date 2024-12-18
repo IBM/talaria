@@ -3,6 +3,8 @@
 ## Overview
 OpenTalaria is a lightweight message broker that implements the Kafka protocol and persists messages in different storage systems like PostgreSQL, SQLite and more.
 
+## Supported APIs
+The project is still a work in progress, please see the [list](docs/apis.md) of currently supported APIs which is updated when new APIs are implemented.
 
 ## Contributing
 
